@@ -219,7 +219,10 @@ test('implements a readable evidence-first responsive design system', () => {
   assert.match(css, /--page:\s*#fbfaf7/i);
   assert.match(css, /--accent-aqua:\s*#9fe8e5/i);
   assert.match(css, /--accent-violet:\s*#b8b9ff/i);
-  assert.match(css, /body[^}]+font-size:\s*19px/is);
+  assert.match(css, /body\s*\{[^}]*font-size:\s*clamp\(19px,\s*calc\(17px \+ 0\.25vw\),\s*21px\)[^}]*line-height:\s*1\.65/s);
+  assert.match(css, /\.assemble-title\s*\{[^}]*font-size:\s*min\(13\.5vw,\s*128px\)/s);
+  assert.doesNotMatch(css, /body\s*\{\s*font-size:\s*18px;\s*\}/);
+  assert.doesNotMatch(css, /\.assemble-title\s*\{\s*font-size:\s*3\.2rem;\s*\}/);
   assert.match(css, /--figure:\s*min\(1040px,\s*calc\(100vw\s*-\s*64px\)\)/i);
   assert.match(css, /\.paper-figure\s*\{[^}]+width:\s*var\(--figure\)/is);
   assert.match(css, /\.paper-figure-image[^}]+width:\s*100%/is);
@@ -233,7 +236,6 @@ test('implements a readable evidence-first responsive design system', () => {
   assert.match(css, /prefers-reduced-motion/);
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media\s*\(max-width:\s*720px\)/);
-  assert.match(css, /@media\s*\(max-width:\s*720px\)[\s\S]+?body\s*\{[^}]+font-size:\s*18px/i);
 });
 
 test('keeps explanatory cards compact and groups each number with its copy', () => {

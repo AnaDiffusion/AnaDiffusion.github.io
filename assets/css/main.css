@@ -59,8 +59,8 @@ body {
   background: var(--page);
   color: var(--ink-soft);
   font-family: var(--sans);
-  font-size: 19px;
-  line-height: 1.7;
+  font-size: clamp(19px, calc(17px + 0.25vw), 21px);
+  line-height: 1.65;
   letter-spacing: -.008em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -165,7 +165,7 @@ h1, h2, h3, strong { color: var(--ink); }
    base underline = cerebellar-brainstem CB (butter yellow).
    Parts fly in, meet at a glowing seam, then the whole emerges noisy and denoises. */
 .assemble-title {
-  margin: 0 auto 14px; font-family: var(--serif); font-size: clamp(3.4rem, 6vw, 5.4rem);
+  margin: 0 auto 14px; font-family: var(--serif); font-size: min(13.5vw, 128px);
   font-weight: 500; letter-spacing: -.045em; line-height: 1;
 }
 .assemble-stage { position: relative; display: inline-block; padding-bottom: .12em; cursor: default; }
@@ -579,7 +579,6 @@ h1, h2, h3, strong { color: var(--ink); }
 }
 
 @media (max-width: 720px) {
-  body { font-size: 18px; }
   .paper-figure figcaption { grid-template-columns: 1fr; gap: 10px; padding-top: 19px; }
   .full-resolution-link { grid-column: auto; margin-top: 5px; }
   .method-steps { grid-template-columns: 1fr; }
@@ -597,7 +596,6 @@ h1, h2, h3, strong { color: var(--ink); }
 }
 
 @media (max-width: 480px) {
-  .assemble-title { font-size: 3.2rem; }
   .authors { font-size: .9rem; }
   .resource-links { display: grid; }
   .resource-links a { width: 100%; justify-content: center; }
