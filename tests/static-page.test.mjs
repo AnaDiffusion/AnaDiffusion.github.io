@@ -1,0 +1,398 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
+
+const testDirectory = dirname(fileURLToPath(import.meta.url));
+const pageRoot = resolve(testDirectory, '..');
+const pagePath = resolve(pageRoot, 'index.html');
+const cssPath = resolve(pageRoot, 'assets/css/main.css');
+const volumeViewerPath = resolve(pageRoot, 'assets/js/volume-viewer.mjs');
+const assemblyVolumePath = resolve(pageRoot, 'volumes/assembly-parts-sample-01.nii.gz');
+const assemblyBuilderPath = resolve(pageRoot, 'scripts/build-colored-assembly.py');
+
+function readPage() {
+  return readFileSync(pagePath, 'utf8');
+}
+
+test('contains every required research section', () => {
+  const html = readPage();
+
+  for (const id of ['overview', 'method', 'results', 'editing', 'samples', 'limitations', 'citation']) {
+    assert.match(html, new RegExp(`id=["']${id}["']`));
+  }
+});
+
+test('uses the exact standalone paper build as the downloadable paper', () => {
+  const paper = readFileSync(resolve(pageRoot, 'paper.pdf'));
+  const digest = createHash('sha256').update(paper).digest('hex');
+
+  assert.equal(digest, '2201fc3e80b5a1e3d01cd80774b31cb7962f7b2000543bc6a0122c6d504e6858');
+});
+
+test('uses the corrected paper identity and primary claims', () => {
+  const html = readPage();
+
+  assert.match(html, /August 23, 2026/);
+  assert.match(html, /Anatomically Compositional Latent Diffusion for Controllable 3D Brain MRI Generation/);
+  assert.match(html, /Xiaoqing Wang/);
+  assert.doesNotMatch(html, /Jade Wang/);
+  assert.match(html, /36\.16/);
+  assert.match(html, /6\.21/);
+  assert.match(html, /6\.67/);
+  assert.match(html, /1\.06/);
+  assert.match(html, /0\.29/);
+  assert.match(html, /0\.144/);
+  assert.match(html, /0\.169/);
+  assert.match(html, /0\.185/);
+  assert.match(html, /0\.9427/);
+  assert.match(html, /0\.9618/);
+  assert.match(html, /<span>Table 1<\/span><h3 id="table-1-title">Generation and focused morphometric metrics on ADNI\.<\/h3>/);
+  assert.doesNotMatch(html, /May 17, 2026|34\.33|0\.24/);
+});
+
+test('links the supplied paper and repository without invented destinations', () => {
+  const html = readPage();
+
+  assert.match(html, /href=["']paper\.pdf["']/);
+  assert.match(html, /https:\/\/github\.com\/phai-lab\/AnaDiffusion\.git/);
+  assert.match(html, /https:\/\/github\.com\/tracyhann\/AnaDiffusion-project-page/);
+  assert.doesNotMatch(html, /arxiv\.org|youtube\.com|VIDEO_ID/);
+  assert.doesNotMatch(html, /href=["']#["']/);
+});
+
+test('contains no unfilled template markers', () => {
+  const html = readPage();
+
+  assert.equal(html.includes(['RE', 'PLACE'].join('')), false);
+  assert.doesNotMatch(html, /placeholder-(?:teaser|figure|author|logo)/i);
+});
+
+test('references only existing local image and paper assets', () => {
+  const html = readPage();
+  const localTargets = [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)]
+    .map((match) => match[1])
+    .filter((target) => !target.startsWith('http') && !target.startsWith('#'))
+    .filter((target) => /\.(?:png|jpe?g|pdf)$/i.test(target));
+
+  assert.equal(localTargets.length > 0, true);
+  for (const target of localTargets) {
+    assert.equal(existsSync(resolve(pageRoot, target)), true, `Missing local asset: ${target}`);
+  }
+});
+
+test('publishes complete corrected figures and ten independent samples', () => {
+  const requiredFigures = [
+    'images/teaser.png',
+    'images/figure-2-method.png',
+    'images/figure-3-comparison.png',
+    'images/editing-comparison.png',
+  ];
+  const requiredSamples = Array.from(
+    { length: 10 },
+    (_, index) => `images/samples/sample-${String(index + 1).padStart(2, '0')}.png`,
+  );
+
+  for (const asset of [...requiredFigures, ...requiredSamples]) {
+    assert.equal(existsSync(resolve(pageRoot, asset)), true, `Missing corrected-paper asset: ${asset}`);
+  }
+});
+
+test('uses the supplied teaser as Figure 1', () => {
+  const html = readPage();
+  const figure = readFileSync(resolve(pageRoot, 'images/teaser.png'));
+  const digest = createHash('sha256').update(figure).digest('hex');
+
+  assert.equal(digest, '39174e58622485c77ee0a837716bf7afddc4bba1da29d0159b78c9547e91b0be');
+  assert.match(html, /href="images\/teaser\.png"[^>]*aria-label="Open Figure 1 at full resolution"/);
+  assert.match(html, /src="images\/teaser\.png" width="2800" height="1595"/);
+  assert.match(html, /alt="AnaDiffusion Figure 1 comparing baseline anatomical failures with AnaDiffusion outputs, a MedicalNet FID radar chart, and a SynthSeg effect-size comparison"/);
+  assert.match(html, /class="full-resolution-link" href="images\/teaser\.png"/);
+  assert.doesNotMatch(html, /(?:src|href)="images\/figure-1-overview\.png"/);
+});
+
+test('includes canonical and social metadata from the paper', () => {
+  const html = readPage();
+
+  assert.match(html, /rel=["']canonical["'][^>]+https:\/\/github\.com\/tracyhann\/AnaDiffusion-project-page/);
+  assert.match(html, /property=["']og:title["'][^>]+AnaDiffusion/);
+  assert.match(html, /name=["']description["'][^>]+anatomically compositional/i);
+});
+
+test('keeps every paper figure accessible without JavaScript', () => {
+  const html = readPage();
+
+  assert.match(html, /<a[^>]+data-paper-figure=["']1["'][^>]+href=["']images\/teaser\.png["']/);
+  for (let number = 2; number <= 3; number += 1) {
+    assert.match(html, new RegExp(`<a[^>]+data-paper-figure=["']${number}["'][^>]+href=["']images/figure-${number}-[^"']+\\.png["']`));
+  }
+  assert.match(html, /<a[^>]+data-paper-figure=["']4["'][^>]+href=["']images\/editing-comparison\.png["']/);
+  assert.doesNotMatch(html, /<dialog|data-figure-open|data-figure-close/);
+  assert.doesNotMatch(html, /<canvas|anatomy-canvas|hero-object/);
+});
+
+test('displays every research figure completely in the main reading flow', () => {
+  const html = readPage();
+
+  assert.match(html, /src=["']images\/teaser\.png["']/);
+  assert.match(html, /Figure 1/);
+  for (let number = 2; number <= 3; number += 1) {
+    assert.match(html, new RegExp(`src=["']images/figure-${number}-[^"']+\\.png["']`));
+    assert.match(html, new RegExp(`Figure ${number}`));
+  }
+  assert.match(html, /src=["']images\/editing-comparison\.png["']/);
+  assert.match(html, /Figure 4b/);
+  assert.equal((html.match(/class=["'][^"']*paper-figure-image[^"']*["']/g) ?? []).length, 4);
+});
+
+test('shows only the localized editing comparison above the editing table', () => {
+  const html = readPage();
+  const figure = html.match(
+    /<figure class="paper-figure">\s*<a class="figure-link" data-paper-figure="4"[\s\S]*?<\/figure>/,
+  )?.[0] ?? '';
+
+  assert.match(figure, /href="images\/editing-comparison\.png"/);
+  assert.match(figure, /src="images\/editing-comparison\.png"/);
+  assert.match(figure, /width="2200" height="1096"/);
+  assert.doesNotMatch(figure, /figure-4-editing\.png|Quantitative editing locality above/);
+  assert.match(html, /data-table="editing"/);
+  assert.equal((html.match(/data-editing-row/g) ?? []).length, 6);
+});
+
+test('uses the shared skinny border for Figure 3', () => {
+  const html = readPage();
+  const figureClass = html.match(
+    /<figure class="([^"]*)">\s*<a class="figure-link" data-paper-figure="3"/,
+  )?.[1] ?? '';
+
+  assert.equal(figureClass, 'paper-figure');
+  assert.doesNotMatch(figureClass, /paper-figure-dark/);
+});
+
+test('renders ten independent samples in an accessible scroll rail', () => {
+  const html = readPage();
+
+  assert.match(html, /data-sample-rail/);
+  assert.match(html, /data-gallery-previous/);
+  assert.match(html, /data-gallery-next/);
+  assert.match(html, /data-gallery-status[^>]+aria-live=["']polite["']/);
+  assert.equal((html.match(/class=["'][^"']*sample-card[^"']*["']/g) ?? []).length, 10);
+  assert.equal((html.match(/images\/samples\/sample-\d{2}\.png/g) ?? []).length, 10);
+});
+
+test('publishes all four paper-grounded limitations', () => {
+  const html = readPage();
+  const section = html.match(/<section[^>]+id="limitations"[\s\S]*?<\/section>/)?.[0] ?? '';
+
+  assert.equal((section.match(/<p><strong>/g) ?? []).length, 4);
+  assert.match(section, /additional training and inference complexity compared with a monolithic LDM/i);
+  assert.match(section, /does not fully solve broader tissue-level calibration/i);
+  assert.match(section, /tissue classes, functional networks, or multi-scale anatomical hierarchies/i);
+  assert.match(section, /approximate correspondence with MNI152/i);
+  assert.match(section, /severe mass effect or displaced anatomical boundaries/i);
+  assert.match(section, /lesion-aware or subject-adaptive localization/i);
+});
+
+test('keeps footer logos legible and sample cards closer to source size', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(css, /\.footer-logos img:first-child\s*\{[^}]*filter:\s*none[^}]*opacity:\s*1/s);
+  assert.match(css, /\.footer-logos img:last-child\s*\{[^}]*max-width:\s*160px[^}]*filter:\s*brightness\(0\) invert\(1\)/s);
+  assert.match(css, /\.sample-card\s*\{[^}]*flex:\s*0 0 min\(720px,\s*62vw\)/s);
+});
+
+test('uses the editorial serif for the future-work heading', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(
+    css,
+    /\.section-heading h2,\s*\.abstract-section h2,\s*\.limitations-section h2,\s*\.future-section h2,\s*\.citation-section h2\s*\{[^}]*font-family:\s*var\(--serif\)/s,
+  );
+});
+
+test('implements a readable evidence-first responsive design system', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(css, /--page:\s*#fbfaf7/i);
+  assert.match(css, /--accent-aqua:\s*#9fe8e5/i);
+  assert.match(css, /--accent-violet:\s*#b8b9ff/i);
+  assert.match(css, /body[^}]+font-size:\s*19px/is);
+  assert.match(css, /--figure:\s*min\(1040px,\s*calc\(100vw\s*-\s*64px\)\)/i);
+  assert.match(css, /\.paper-figure\s*\{[^}]+width:\s*var\(--figure\)/is);
+  assert.match(css, /\.paper-figure-image[^}]+width:\s*100%/is);
+  assert.match(css, /\.paper-table\s*\{[^}]+font-size:\s*1\.0625rem/is);
+  assert.match(css, /\.table-scroll[^}]+overflow-x:\s*auto/is);
+  assert.match(css, /\.paper-table[^}]+font-variant-numeric:\s*tabular-nums/is);
+  assert.match(css, /position:\s*sticky/i);
+  assert.match(css, /scroll-snap-type:\s*x\s+mandatory/i);
+  assert.match(css, /scroll-snap-align:\s*start/i);
+  assert.doesNotMatch(css, /\.paper-figure-image[^}]+(?:max-height|object-fit:\s*cover)/is);
+  assert.match(css, /prefers-reduced-motion/);
+  assert.match(css, /:focus-visible/);
+  assert.match(css, /@media\s*\(max-width:\s*720px\)/);
+  assert.match(css, /@media\s*\(max-width:\s*720px\)[\s\S]+?body\s*\{[^}]+font-size:\s*18px/i);
+});
+
+test('keeps explanatory cards compact and groups each number with its copy', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(css, /\.method-steps article\s*\{[^}]+display:\s*grid[^}]+grid-template-columns:\s*38px\s+minmax\(0,\s*1fr\)[^}]+min-height:\s*0/is);
+  assert.match(css, /\.method-steps h3\s*\{[^}]+grid-column:\s*2[^}]+margin:\s*0/is);
+  assert.match(css, /\.method-steps p\s*\{[^}]+grid-column:\s*2[^}]+margin:\s*12px\s+0\s+0/is);
+  assert.match(css, /\.contribution-list article\s*\{[^}]+display:\s*grid[^}]+grid-template-columns:\s*38px\s+minmax\(0,\s*1fr\)[^}]+min-height:\s*0/is);
+  assert.match(css, /\.contribution-list h3\s*\{[^}]+grid-column:\s*2[^}]+margin:\s*0/is);
+  assert.doesNotMatch(css, /min-height:\s*(?:230|250)px|margin:\s*(?:53|68)px\s+0|\.method-steps h3\s*\{[^}]+margin-top:\s*25px/is);
+});
+
+test('publishes the complete generation, ablation, and editing tables', () => {
+  const html = readPage();
+
+  assert.match(html, /data-table=["']generation["']/);
+  for (const method of ['VAE-GAN', 'HA-GAN', 'LDM', 'Seg\. cLDM', 'MorphLDM', 'ControlNet LDM', 'Grid-based LDM', 'Ours']) {
+    assert.match(html, new RegExp(method));
+  }
+  for (const heading of ['WB', 'Left Hemi', 'Right Hemi', 'CB', 'Seam', 'Ventricles', 'Cerebellum', 'Brainstem']) {
+    assert.match(html, new RegExp(`>${heading}<`));
+  }
+
+  assert.match(html, /data-table=["']ablation["']/);
+  assert.match(html, /separate hemisphere models/i);
+  assert.match(html, /w\/o latent injection/);
+  assert.match(html, /full latent injection/);
+  assert.match(html, /r<sub>inj<\/sub>\s*=\s*7/);
+  assert.match(html, /r<sub>inj<\/sub>\s*=\s*15/);
+
+  assert.match(html, /data-table=["']editing["']/);
+  assert.equal((html.match(/data-editing-row/g) ?? []).length, 6);
+  assert.match(html, /0\.9427/);
+  assert.match(html, /0\.9484/);
+  assert.match(html, /0\.9618/);
+});
+
+test('loads complete progressive-enhancement modules', () => {
+  const html = readPage();
+  const modules = [
+    'assets/js/gallery-state.mjs',
+    'assets/js/sample-gallery.mjs',
+    'assets/js/site.mjs',
+  ];
+
+  for (const modulePath of modules) {
+    assert.equal(existsSync(resolve(pageRoot, modulePath)), true, `Missing runtime module: ${modulePath}`);
+  }
+  const siteModule = readFileSync(resolve(pageRoot, 'assets/js/site.mjs'), 'utf8');
+  assert.match(siteModule, /initSampleGallery/);
+  assert.doesNotMatch(siteModule, /initAnatomyExplorer|initFigureDialogs|showModal|data-figure-open/);
+  assert.match(html, /<script\s+type=["']module["']\s+src=["']assets\/js\/site\.mjs["']/);
+});
+
+test('contains the corrected paper citation without the obsolete figure-one note', () => {
+  const html = readPage();
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(html, /Xiaoqing Wang/);
+  assert.match(html, /year\s*=\s*\{2026\}/);
+  assert.doesNotMatch(html, /The overview is reproduced in full|final manuscript values are reported/);
+  assert.doesNotMatch(html, /class="caption-note"/);
+  assert.doesNotMatch(css, /\.caption-note\s*\{/);
+});
+
+test('uses the concise AnaDiffusion citation heading', () => {
+  const html = readPage();
+  const section = html.match(/<section class="citation-section"[\s\S]*?<\/section>/)?.[0] ?? '';
+
+  assert.match(section, /<h2 id="citation-title">Cite AnaDiffusion<\/h2>/);
+  assert.doesNotMatch(section, /Use and cite AnaDiffusion/);
+  assert.doesNotMatch(section, /The exact supplied preprint is available below together with the implementation repository\./);
+});
+
+test('does not publish unused social image metadata', () => {
+  const html = readPage();
+
+  assert.equal(existsSync(resolve(pageRoot, 'images/og-card.png')), false);
+  assert.doesNotMatch(html, /property=["']og:image(?::(?:width|height|alt))?["']/);
+  assert.doesNotMatch(html, /name=["']twitter:image["']/);
+});
+
+test('uses a square viewer beside a vertical volume rail', () => {
+  const html = readPage();
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(html, /<div class="viewer-viewport">[\s\S]*data-volume-viewer[\s\S]*data-viewer-status/);
+  assert.match(css, /\.viewer-shell\s*\{[^}]*grid-template-columns:\s*210px minmax\(0,\s*820px\)/s);
+  assert.match(css, /\.viewer-stage\s*\{[^}]*aspect-ratio:\s*1/s);
+  assert.match(css, /\.viewer-chips\s*\{[^}]*flex-direction:\s*column/s);
+  assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.viewer-chips\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+});
+
+test('keeps one four-panel mode without redundant view buttons', () => {
+  const html = readPage();
+  const viewerModule = readFileSync(volumeViewerPath, 'utf8');
+
+  assert.doesNotMatch(html, /data-view=/);
+  assert.doesNotMatch(html, />Slices<|>3D</);
+  assert.doesNotMatch(viewerModule, /querySelectorAll\('\[data-view\]'\)/);
+  assert.match(viewerModule, /nv\.setSliceType\(nv\.sliceTypeMultiplanar\)/);
+});
+
+test('uses readable viewer emphasis and active-button text', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(css, /\.viewer-heading strong\s*\{[^}]*color:\s*#fff/s);
+  assert.match(css, /\.viewer-chips button\.is-active\s*\{[^}]*color:\s*#21172c/s);
+});
+
+test('renders one precomposed colored assembly without viewer overlays', () => {
+  const viewerModule = readFileSync(volumeViewerPath, 'utf8');
+  const assemblyBranch = viewerModule.match(
+    /if \(which === 'assemble'\) \{([\s\S]*?)\n\s*\} else \{/,
+  )?.[1] ?? '';
+
+  assert.match(viewerModule, /crosshairWidth:\s*0/);
+  assert.match(viewerModule, /show3Dcrosshair:\s*false/);
+  assert.match(viewerModule, /isOrientationTextVisible:\s*false/);
+  assert.match(viewerModule, /multiplanarLayout:\s*2/);
+  assert.match(viewerModule, /multiplanarShowRender:\s*1/);
+  assert.match(viewerModule, /assembly:\s*\{ url: BASE \+ 'assembly-parts-sample-01\.nii\.gz'/);
+  assert.match(assemblyBranch, /nv\.loadVolumes\(\[\{ url: VOLUMES\.assembly\.url, opacity: 1 \}\]\)/);
+  assert.doesNotMatch(assemblyBranch, /VOLUMES\.(?:whole|lhemi|rhemi|cb)\.url/);
+  assert.doesNotMatch(assemblyBranch, /colormap|hideBackground/);
+});
+
+test('publishes the three supplied parts as one RGB NIfTI volume', () => {
+  assert.equal(existsSync(assemblyVolumePath), true, 'Missing precomposed assembly volume');
+
+  const nifti = gunzipSync(readFileSync(assemblyVolumePath));
+  assert.equal(nifti.readInt32LE(0), 348);
+  assert.equal(nifti.readInt16LE(70), 128, 'Expected NIfTI RGB24 datatype');
+  assert.equal(nifti.readInt16LE(72), 24, 'Expected 24 bits per voxel');
+  assert.deepEqual(
+    [nifti.readInt16LE(42), nifti.readInt16LE(44), nifti.readInt16LE(46)],
+    [128, 128, 128],
+  );
+
+  const builder = readFileSync(assemblyBuilderPath, 'utf8');
+  assert.match(builder, /target_mask = np\.any\(part_masks, axis=0\)/);
+  assert.doesNotMatch(builder, /distance_transform_edt|uncovered|whole\s*=\s*np\.asarray/);
+});
+
+test('cache-busts the viewer module so viewer updates reach the browser', () => {
+  const html = readPage();
+
+  assert.match(
+    html,
+    /<script\s+type=["']module["']\s+src=["']assets\/js\/volume-viewer\.mjs\?v=20260820-7["']><\/script>/,
+  );
+});
+
+test('cache-busts the stylesheet so current styles reach the browser', () => {
+  const html = readPage();
+
+  assert.match(
+    html,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260820-3["']>/,
+  );
+});

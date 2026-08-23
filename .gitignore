@@ -1,0 +1,23 @@
+# Local scratch files
+tmp/
+.superpowers/
+
+# macOS
+.DS_Store
+
+# Python caches and environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor settings
+.vscode/
+.idea/
+*.swp
+
+# Local environment and logs
+.env
+.env.*
+!.env.example
+*.log
