@@ -509,7 +509,7 @@ h1, h2, h3, strong { color: var(--ink); }
 .viewer-heading strong { color: #fff; }
 .viewer-heading code { padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,.09); font-size: .82em; }
 .viewer-shell {
-  display: grid; grid-template-columns: 210px minmax(0, 820px); gap: 24px; align-items: start; justify-content: center;
+  display: grid; grid-template-columns: 210px minmax(0, 720px); gap: 24px; align-items: start; justify-content: center;
 }
 .viewer-controls, .viewer-viewport { min-width: 0; }
 .viewer-chips { display: flex; flex-direction: column; gap: 8px; }

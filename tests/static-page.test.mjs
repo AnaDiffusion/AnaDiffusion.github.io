@@ -317,12 +317,12 @@ test('does not publish unused social image metadata', () => {
   assert.doesNotMatch(html, /name=["']twitter:image["']/);
 });
 
-test('uses a square viewer beside a vertical volume rail', () => {
+test('uses a smaller square viewer beside a vertical volume rail', () => {
   const html = readPage();
   const css = readFileSync(cssPath, 'utf8');
 
   assert.match(html, /<div class="viewer-viewport">[\s\S]*data-volume-viewer[\s\S]*data-viewer-status/);
-  assert.match(css, /\.viewer-shell\s*\{[^}]*grid-template-columns:\s*210px minmax\(0,\s*820px\)/s);
+  assert.match(css, /\.viewer-shell\s*\{[^}]*grid-template-columns:\s*210px minmax\(0,\s*720px\)/s);
   assert.match(css, /\.viewer-stage\s*\{[^}]*aspect-ratio:\s*1/s);
   assert.match(css, /\.viewer-chips\s*\{[^}]*flex-direction:\s*column/s);
   assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.viewer-chips\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
