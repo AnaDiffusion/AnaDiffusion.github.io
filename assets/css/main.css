@@ -297,12 +297,12 @@ h1, h2, h3, strong { color: var(--ink); }
   opacity: .3; transform: translateY(120px); filter: saturate(.9);
 }
 .abstract-section .section-kicker,
-.abstract-section h2 { text-align: center; }
+.abstract-section h2 { text-align: left; }
 .abstract-section .section-kicker::after {
-  content: ""; display: block; width: 48px; height: 3px; margin: 14px auto 0;
+  content: ""; display: block; width: 48px; height: 3px; margin: 14px 0 0;
   border-radius: 3px; background: var(--grad);
 }
-.abstract-section h2 { max-width: 760px; margin-inline: auto; }
+.abstract-section h2 { max-width: 760px; margin-inline: 0; }
 .abstract-section > .reading-shell { position: relative; z-index: 1; }
 .abstract-section > .reading-shell > p:not(.section-kicker) { color: #58565f; font-size: 1.12rem; }
 .abstract-section .abstract-lead { color: var(--ink); font-family: var(--serif); font-size: 1.58rem; font-weight: 400; line-height: 1.48; }
