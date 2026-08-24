@@ -1,6 +1,7 @@
 # Local scratch files
 tmp/
 .superpowers/
+.worktrees/
 
 # macOS
 .DS_Store
