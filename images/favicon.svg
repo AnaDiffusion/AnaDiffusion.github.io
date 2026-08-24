@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="AnaDiffusion spectrum mark">
+  <defs>
+    <clipPath id="rounded"><rect x="14" y="14" width="228" height="228" rx="54"/></clipPath>
+    <radialGradient id="violet" cx="0" cy="1" r="1">
+      <stop offset="0" stop-color="#8667c8"/>
+      <stop offset=".72" stop-color="#9b7fd4" stop-opacity=".62"/>
+      <stop offset="1" stop-color="#9b7fd4" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="gold" cx="1" cy="0" r="1">
+      <stop offset="0" stop-color="#f3db82"/>
+      <stop offset=".72" stop-color="#f0d78a" stop-opacity=".7"/>
+      <stop offset="1" stop-color="#f0d78a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="green" cx="1" cy="1" r="1">
+      <stop offset="0" stop-color="#8fbe81"/>
+      <stop offset=".72" stop-color="#a4cf94" stop-opacity=".76"/>
+      <stop offset="1" stop-color="#a4cf94" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".66">
+      <stop offset="0" stop-color="#fff" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g clip-path="url(#rounded)">
+    <rect x="14" y="14" width="228" height="228" fill="#c9b8ea"/>
+    <rect x="14" y="14" width="228" height="228" fill="url(#violet)"/>
+    <rect x="14" y="14" width="228" height="228" fill="url(#gold)"/>
+    <rect x="14" y="14" width="228" height="228" fill="url(#green)"/>
+    <rect x="14" y="14" width="228" height="228" fill="url(#glow)"/>
+  </g>
+  <rect x="9" y="9" width="238" height="238" rx="59" fill="none" stroke="#fff" stroke-opacity=".86" stroke-width="8"/>
+</svg>

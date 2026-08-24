@@ -15,10 +15,30 @@ const volumeViewerPath = resolve(pageRoot, 'assets/js/volume-viewer.mjs');
 const continuousAssemblyPath = resolve(pageRoot, 'media/anadiffusion-assembly-transparent-continuous.webm');
 const assemblyVolumePath = resolve(pageRoot, 'volumes/assembly-parts-sample-01.nii.gz');
 const assemblyBuilderPath = resolve(pageRoot, 'scripts/build-colored-assembly.py');
+const faviconSvgPath = resolve(pageRoot, 'images/favicon.svg');
+const faviconPngPath = resolve(pageRoot, 'images/favicon.png');
 
 function readPage() {
   return readFileSync(pagePath, 'utf8');
 }
+
+test('uses the AnaDiffusion spectrum favicon instead of the PHAI logo', () => {
+  const html = readPage();
+
+  assert.equal(existsSync(faviconSvgPath), true, 'Missing AnaDiffusion SVG favicon');
+  const svg = readFileSync(faviconSvgPath, 'utf8');
+  const png = readFileSync(faviconPngPath);
+
+  assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="images\/favicon\.svg\?v=20260824-1">/);
+  assert.match(html, /<link rel="icon" type="image\/png" sizes="256x256" href="images\/favicon\.png\?v=20260824-1">/);
+  assert.match(svg, /viewBox="0 0 256 256"/);
+  assert.match(svg, /#9b7fd4/i);
+  assert.match(svg, /#f0d78a/i);
+  assert.match(svg, /#a4cf94/i);
+  assert.doesNotMatch(svg, /PHAI|#2d4f73/i);
+  assert.equal(png.readUInt32BE(16), 256);
+  assert.equal(png.readUInt32BE(20), 256);
+});
 
 test('contains every required research section', () => {
   const html = readPage();
