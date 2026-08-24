@@ -114,8 +114,9 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
   assert.match(abstract, /<div class="abstract-motion" aria-hidden="true">/);
   assert.match(
     abstract,
-    /<video\s+data-abstract-motion\s+muted\s+loop\s+playsinline\s+preload="metadata"\s+poster="media\/anadiffusion-assembly-transparent-poster\.png"\s+tabindex="-1">/,
+    /<video\s+data-abstract-motion\s+muted\s+loop\s+playsinline\s+preload="metadata"\s+tabindex="-1">/,
   );
+  assert.doesNotMatch(abstract, /\sposter=/);
   assert.match(
     abstract,
     /<source src="media\/anadiffusion-assembly-transparent-continuous\.webm\?v=20260824-1" type="video\/webm">/,
