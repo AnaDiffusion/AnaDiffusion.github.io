@@ -102,6 +102,13 @@ class FrameRenderTests(unittest.TestCase):
         background = np.array(self.renderer_module.BACKGROUND_RGB, dtype=np.uint8)
         self.assertGreater(np.count_nonzero(np.any(pixels != background, axis=-1)), 500)
 
+    def test_all_anatomical_faces_share_one_depth_sorted_collection(self):
+        self.assertEqual(
+            len(self.renderer.axes.collections),
+            1,
+            "separate part collections impose a fixed inter-part paint order",
+        )
+
 
 class MediaOutputTests(unittest.TestCase):
     def test_expected_media_files_exist(self):

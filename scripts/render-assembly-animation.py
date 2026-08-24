@@ -22,6 +22,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.colors import to_rgba
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import nibabel as nib
@@ -179,7 +180,7 @@ class AssemblyRenderer:
         self.axes = self.figure.add_axes(
             [0.02, 0.03, 0.96, 0.94],
             projection="3d",
-            computed_zorder=False,
+            computed_zorder=True,
         )
         self.axes.set_facecolor(BACKGROUND)
         self.axes.set_axis_off()
@@ -205,19 +206,46 @@ class AssemblyRenderer:
         self.axes.set_zlim(center[2] - radius, center[2] + radius)
         self.axes.set_box_aspect((1.0, 1.0, 1.0), zoom=1.35)
 
-        self.collections: dict[str, Poly3DCollection] = {}
-        for zorder, name in enumerate(("left", "right", "cb"), start=2):
+        triangle_groups: list[np.ndarray] = []
+        facecolor_groups: list[np.ndarray] = []
+        self.face_part_slices: dict[str, slice] = {}
+        face_offset = 0
+        light_direction = np.array([0.35, -0.45, 0.82], dtype=np.float64)
+        light_direction /= np.linalg.norm(light_direction)
+
+        for name in ("left", "right", "cb"):
             vertices, faces = mesh_data[name]
-            collection = Poly3DCollection(
-                vertices[faces],
-                facecolors=PART_COLORS[name],
-                linewidth=0.0,
-                alpha=0.0,
-                shade=True,
-                zorder=zorder,
-            )
-            self.axes.add_collection3d(collection)
-            self.collections[name] = collection
+            triangles = vertices[faces]
+            triangle_groups.append(triangles)
+
+            edges_a = triangles[:, 1] - triangles[:, 0]
+            edges_b = triangles[:, 2] - triangles[:, 0]
+            normals = np.cross(edges_a, edges_b)
+            lengths = np.linalg.norm(normals, axis=1, keepdims=True)
+            normals = np.divide(normals, lengths, out=np.zeros_like(normals), where=lengths > 0)
+            illumination = np.clip(normals @ light_direction, -1.0, 1.0)
+            illumination = 0.68 + 0.32 * (illumination + 1.0) / 2.0
+
+            base_rgba = np.array(to_rgba(PART_COLORS[name]), dtype=np.float64)
+            facecolors = np.tile(base_rgba, (len(faces), 1))
+            facecolors[:, :3] *= illumination[:, None]
+            facecolors[:, 3] = 0.0
+            facecolor_groups.append(facecolors)
+
+            next_offset = face_offset + len(faces)
+            self.face_part_slices[name] = slice(face_offset, next_offset)
+            face_offset = next_offset
+
+        all_triangles = np.concatenate(triangle_groups, axis=0)
+        self.base_facecolors = np.concatenate(facecolor_groups, axis=0)
+        self.surface_collection = Poly3DCollection(
+            all_triangles,
+            facecolors=self.base_facecolors,
+            edgecolors="none",
+            linewidth=0.0,
+            zsort="average",
+        )
+        self.axes.add_collection3d(self.surface_collection)
 
         scale = self.width / WIDTH
         self.eyebrow = self.figure.text(
@@ -256,8 +284,10 @@ class AssemblyRenderer:
 
     def render_frame(self, time_s: float) -> Image.Image:
         state = stage_state(time_s)
+        facecolors = self.base_facecolors.copy()
         for name, alpha in state.items():
-            self.collections[name].set_alpha(alpha)
+            facecolors[self.face_part_slices[name], 3] = alpha
+        self.surface_collection.set_facecolor(facecolors)
 
         elevation, azimuth = camera_angles(time_s)
         self.axes.view_init(elev=elevation, azim=azimuth, roll=0.0)
