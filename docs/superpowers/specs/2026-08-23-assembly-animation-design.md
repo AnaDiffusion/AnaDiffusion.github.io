@@ -72,9 +72,22 @@ Temporary PNG frames are written outside the repository and deleted after encodi
 
 Both video deliverables use the same 384 rendered frames at 30 fps, producing an exact 12.8-second playback duration. The poster is a still image and is unaffected by playback rate.
 
+### Transparent, text-free comparison variant
+
+Add a separate transparent variant without replacing or modifying the approved opaque deliverables. It reuses the exact 384-frame source timeline, camera path, 50% part opacity, anatomical colors, framing, and 30 fps delivery rate. Only presentation changes: the canvas alpha is zero outside the anatomy, and the persistent heading and stage label are disabled for every frame.
+
+Deliver:
+
+- `media/anadiffusion-assembly-transparent.webm`: VP9 with an alpha plane (`yuva420p`), 30 fps, 12.8 seconds, and no audio.
+- `media/anadiffusion-assembly-transparent-poster.png`: RGBA poster at `1280 × 720` with a transparent background and no text.
+
+The renderer keeps opaque RGB output as its default and exposes transparent/no-text behavior only through explicit options. A dedicated CLI mode renders this variant without touching the opaque MP4, WebM, or poster. No transparent MP4 is produced because H.264/MP4 cannot preserve an alpha channel; a separate ProRes MOV is unnecessary for the requested web use.
+
 ## Verification
 
 Automated tests will cover the stage-opacity schedule, full 360-degree turn, 1.25x playback configuration, part-mask separation, shared final-canvas geometry, and deterministic frame dimensions. Final validation will use `ffprobe` to confirm both videos are `1280 × 720`, 30 fps, 12.8 seconds, and silent. The poster must be `1280 × 720`, and the existing webpage sources and NIfTI files must remain unchanged.
+
+The transparent variant additionally requires an RGBA frame with zero-alpha background pixels, hidden text artists, an RGBA poster whose alpha channel contains both transparent and visible pixels, and WebM alpha metadata. Decode one encoded frame with `libvpx-vp9` during final verification to confirm the alpha plane survives encoding.
 
 ## Non-goals
 

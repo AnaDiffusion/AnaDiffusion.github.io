@@ -492,3 +492,38 @@ Do not change `DURATION`, source frame count, stage/camera functions, opacity, l
 - [ ] **Step 4: Verify, regenerate, inspect, and commit**
 
 Run the focused configuration tests, regenerate the same 384 source frames, and replace both videos. Compare the poster hash to its pre-render value. Inspect a two-second contact sheet from the encoded MP4 for the unchanged frame sequence and complete orbit. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
+
+### Task 11: Add a transparent, text-free delivery variant
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Create: `media/anadiffusion-assembly-transparent.webm`
+- Create: `media/anadiffusion-assembly-transparent-poster.png`
+- Verify unchanged: `media/anadiffusion-assembly.mp4`
+- Verify unchanged: `media/anadiffusion-assembly.webm`
+- Verify unchanged: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write failing renderer-mode tests**
+
+Require explicit `transparent` and `show_text` renderer options. In transparent/no-text mode, require an RGBA frame, a zero-alpha background, visible nonzero-alpha anatomy, and hidden heading/stage artists. Preserve the existing opaque RGB assertions.
+
+- [ ] **Step 2: Run the focused test and verify RED**
+
+Run the transparent renderer-mode test and confirm it fails because the options do not exist yet.
+
+- [ ] **Step 3: Implement opt-in RGBA rendering**
+
+Keep the current opaque defaults. Use a zero-alpha figure and axes background in transparent mode, return the complete RGBA canvas buffer, and hide all three text artists when `show_text=False`.
+
+- [ ] **Step 4: Add failing media-contract tests**
+
+Require the transparent WebM and poster, a `1280 × 720` RGBA poster with mixed alpha values, and a silent 30 fps, 12.8-second WebM carrying alpha metadata.
+
+- [ ] **Step 5: Implement and render the transparent variant**
+
+Add a separate CLI mode that renders all 384 RGBA PNG frames, encodes VP9 with `yuva420p` and alpha mode metadata, and saves a transparent poster. Do not create a transparent MP4 and do not overwrite the opaque outputs.
+
+- [ ] **Step 6: Inspect, verify, and integrate locally**
+
+Inspect the poster and a decoded animation frame over a checkerboard. Run the complete Python and Node suites, `git diff --check`, and the protected opaque-media/webpage/NIfTI hash audit. Commit locally and integrate without pushing.
