@@ -39,6 +39,8 @@ MEDIA_DIR = ROOT / "media"
 WIDTH = 1280
 HEIGHT = 720
 FPS = 24
+PLAYBACK_RATE = 1.25
+OUTPUT_FPS = int(FPS * PLAYBACK_RATE)
 DURATION = 16.0
 PART_OPACITY = 0.50
 
@@ -324,7 +326,7 @@ def _encode_video(
         "error",
         "-y",
         "-framerate",
-        str(FPS),
+        str(OUTPUT_FPS),
         "-i",
         str(frame_pattern),
         "-an",

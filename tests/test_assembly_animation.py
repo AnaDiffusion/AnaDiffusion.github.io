@@ -74,6 +74,10 @@ class AnimationStateTests(unittest.TestCase):
         opacity = getattr(self.renderer, "PART_OPACITY", 1.0)
         self.assertAlmostEqual(opacity, 0.50)
 
+    def test_output_uses_the_approved_playback_rate(self):
+        self.assertAlmostEqual(getattr(self.renderer, "PLAYBACK_RATE", 1.0), 1.25)
+        self.assertEqual(getattr(self.renderer, "OUTPUT_FPS", self.renderer.FPS), 30)
+
 
 @unittest.skipUnless(RENDERER_PATH.exists(), "animation renderer is missing")
 class AnatomicalMaskTests(unittest.TestCase):
@@ -151,7 +155,7 @@ class MediaOutputTests(unittest.TestCase):
             self.assertEqual(poster.size, (1280, 720))
 
     @unittest.skipUnless(shutil.which("ffprobe"), "ffprobe is required")
-    def test_videos_are_silent_sixteen_second_720p_loops(self):
+    def test_videos_are_silent_1_25x_720p_loops(self):
         for filename in ("anadiffusion-assembly.mp4", "anadiffusion-assembly.webm"):
             path = ROOT / "media" / filename
             result = subprocess.run(
@@ -180,8 +184,8 @@ class MediaOutputTests(unittest.TestCase):
             self.assertEqual(audio_streams, [])
             self.assertEqual(video_streams[0]["width"], 1280)
             self.assertEqual(video_streams[0]["height"], 720)
-            self.assertEqual(video_streams[0]["r_frame_rate"], "24/1")
-            self.assertAlmostEqual(float(probe["format"]["duration"]), 16.0, places=2)
+            self.assertEqual(video_streams[0]["r_frame_rate"], "30/1")
+            self.assertAlmostEqual(float(probe["format"]["duration"]), 12.8, places=2)
 
 
 if __name__ == "__main__":
