@@ -298,6 +298,10 @@ h1, h2, h3, strong { color: var(--ink); }
 }
 .abstract-section .section-kicker,
 .abstract-section h2 { text-align: center; }
+.abstract-section .section-kicker::after {
+  content: ""; display: block; width: 48px; height: 3px; margin: 14px auto 0;
+  border-radius: 3px; background: var(--grad);
+}
 .abstract-section h2 { max-width: 760px; margin-inline: auto; }
 .abstract-section > .reading-shell { position: relative; z-index: 1; }
 .abstract-section > .reading-shell > p:not(.section-kicker) { color: #58565f; font-size: 1.12rem; }
