@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Render the three staged assembly NIfTIs as a deterministic 8-second cinematic 3D loop in MP4 and WebM formats with a matching poster frame.
+**Goal:** Render the three staged assembly NIfTIs as a deterministic 12-second cinematic 3D loop in MP4 and WebM formats with a matching poster frame.
 
 **Architecture:** A standalone Python renderer extracts disjoint anatomical masks from the staged RGB24 volumes, converts them to cached meshes, and reuses one offscreen Matplotlib 3D scene for every frame. FFmpeg encodes the temporary PNG frame sequence; unit tests protect the mask extraction, opacity schedule, looped camera, frame dimensions, and final media metadata.
 
@@ -27,8 +27,9 @@ self.assertEqual(state(1.0)["left"], 1.0)
 self.assertEqual(state(4.0)["right"], 1.0)
 self.assertEqual(state(4.0)["cb"], 0.0)
 self.assertEqual(state(6.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
-self.assertEqual(state(8.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
-self.assertEqual(renderer.camera_angles(0.0), renderer.camera_angles(8.0))
+self.assertEqual(state(8.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
+self.assertEqual(state(12.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
+self.assertEqual(renderer.camera_angles(0.0), renderer.camera_angles(12.0))
 ```
 
 Call `load_part_masks()` and assert every mask is `(128, 128, 128)`, all masks are nonempty and pairwise disjoint, and the returned affine equals the shared assembly affine.
@@ -45,7 +46,7 @@ Expected: FAIL because `scripts/render-assembly-animation.py` does not exist.
 
 - [ ] **Step 3: Implement schedule and mask extraction**
 
-Create constants for `WIDTH = 1280`, `HEIGHT = 720`, `FPS = 24`, `DURATION = 8.0`, the three input paths, and the established RGB colors.
+Create constants for `WIDTH = 1280`, `HEIGHT = 720`, `FPS = 24`, `DURATION = 12.0`, the three input paths, and the established RGB colors.
 
 Implement a clamped smoothstep fade:
 
@@ -55,7 +56,7 @@ def smoothstep(start: float, end: float, value: float) -> float:
     return float(x * x * (3.0 - 2.0 * x))
 ```
 
-`stage_state(time_s)` multiplies each part's entrance opacity by `1 - smoothstep(7.2, 8.0, time_s)`. Entrances are left `0.0–0.5`, right `2.4–3.0`, and cb `4.6–5.2`. `camera_angles(time_s)` uses a full-period sine so time 0 and 8 return identical elevation and azimuth.
+`stage_state(time_s)` multiplies each part's entrance opacity by `1 - smoothstep(11.2, 12.0, time_s)`. Entrances are left `0.0–0.5`, right `2.4–3.0`, and cb `4.6–5.2`. `camera_angles(time_s)` completes a 360-degree turn during `5.2–11.2` and returns to the same physical orientation at the loop boundary.
 
 `load_part_masks()` reads the three RGB24 volumes and returns:
 
@@ -125,7 +126,7 @@ Run the focused unittest command and expect the new frame test plus Task 1 tests
 
 - [ ] **Step 1: Implement frame-sequence and encoding commands**
 
-Add `render_animation(output_dir: Path)` that renders exactly `FPS * DURATION = 192` frames into a `TemporaryDirectory`, saving files as `frame-0000.png` through `frame-0191.png`. Save a separate full-resolution poster from time `6.0`.
+Add `render_animation(output_dir: Path)` that renders exactly `FPS * DURATION = 288` frames into a `TemporaryDirectory`, saving files as `frame-0000.png` through `frame-0287.png`. Save a separate full-resolution poster from time `6.0`.
 
 Run FFmpeg through `subprocess.run(..., check=True)`:
 
@@ -144,7 +145,7 @@ Run:
 /opt/anaconda3/bin/python3 scripts/render-assembly-animation.py
 ```
 
-Expected: the MP4, WebM, and poster appear under `media/` and temporary frames are removed automatically.
+Expected: the 12-second MP4, WebM, and poster appear under `media/` and temporary frames are removed automatically.
 
 - [ ] **Step 3: Inspect one poster and representative video frames**
 
@@ -160,7 +161,7 @@ Use the local image viewer on the poster and FFmpeg-extracted frames near second
 
 - [ ] **Step 1: Add media metadata tests**
 
-Use `ffprobe -v error -show_entries stream=codec_type,width,height -show_entries format=duration -of json` from `subprocess.run`. Assert both videos exist, have one video stream, have no audio stream, are `1280 × 720`, and report duration within `0.05` seconds of `8.0`. Assert the poster is `1280 × 720` RGB.
+Use `ffprobe -v error -show_entries stream=codec_type,width,height -show_entries format=duration -of json` from `subprocess.run`. Assert both videos exist, have one video stream, have no audio stream, are `1280 × 720`, and report duration within `0.05` seconds of `12.0`. Assert the poster is `1280 × 720` RGB.
 
 - [ ] **Step 2: Run animation and page tests**
 
@@ -196,6 +197,8 @@ Do not push or embed the media on the webpage.
 
 ### Task 5: Increase camera coverage and anatomical translucency
 
+> Historical intermediate refinement. Task 6 supersedes its 8-second, 40-degree, and 82% values.
+
 **Files:**
 - Modify: `tests/test_assembly_animation.py`
 - Modify: `scripts/render-assembly-animation.py`
@@ -228,3 +231,54 @@ Run the animation-state and frame-render tests. Render the four-state preview st
 - [ ] **Step 5: Regenerate and verify all media**
 
 Render all 192 frames and replace the MP4, WebM, and poster. Inspect a one-frame-per-second contact sheet from the encoded MP4. Run the complete Python and Node test suites, then commit locally without pushing.
+
+### Task 6: Show a full translucent 360-degree view
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Regenerate: `media/anadiffusion-assembly.mp4`
+- Regenerate: `media/anadiffusion-assembly.webm`
+- Regenerate: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write failing duration, rotation, and opacity tests**
+
+Update the loop-boundary assertion to compare seconds 0 and 12. Assert that the stage is fully visible at second 8 and fully faded at second 12, that camera azimuth advances exactly 360 degrees between seconds 5.2 and 11.2, and that maximum surface opacity equals `0.70`. Update media metadata expectations from 8 to 12 seconds.
+
+```python
+self.assertEqual(renderer.camera_angles(0.0), renderer.camera_angles(12.0))
+self.assertEqual(renderer.stage_state(8.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
+self.assertEqual(renderer.stage_state(12.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
+_, start_azimuth = renderer.camera_angles(5.2)
+_, end_azimuth = renderer.camera_angles(11.2)
+self.assertAlmostEqual(end_azimuth - start_azimuth, 360.0)
+self.assertAlmostEqual(renderer.PART_OPACITY, 0.70)
+```
+
+- [ ] **Step 2: Run the focused tests and verify RED**
+
+Run:
+
+```bash
+MPLCONFIGDIR=/tmp/anadiffusion-mpl-cache XDG_CACHE_HOME=/tmp/anadiffusion-xdg-cache /opt/anaconda3/bin/python3 -m unittest tests.test_assembly_animation.AnimationStateTests tests.test_assembly_animation.MediaOutputTests -v
+```
+
+Expected: FAIL because the current renderer is 8 seconds, spans less than 360 degrees, and uses `0.82` opacity.
+
+- [ ] **Step 3: Implement the 12-second turn**
+
+Set `DURATION = 12.0` and `PART_OPACITY = 0.70`. Preserve the assembly entrance times, hold the starting three-quarter view through second 5.2, then map a smoothstep progress from `5.2–11.2` to 360 degrees of azimuth. Apply one sinusoidal elevation cycle across the same progress. Move the stage fade to `11.2–12.0` and the title fade to `11.4–12.0`.
+
+```python
+turn_progress = _smoothstep(5.2, 11.2, loop_time)
+elevation = 18.0 + 5.0 * math.sin(2.0 * math.pi * turn_progress)
+azimuth = -38.0 + 360.0 * turn_progress
+```
+
+- [ ] **Step 4: Regenerate and inspect all outputs**
+
+Render 288 frames at 24 fps, encode both formats, regenerate the poster, and inspect a one-frame-per-second contact sheet from the MP4. Confirm that the fully assembled anatomy exposes all sides at 70% opacity and that depth sorting remains correct.
+
+- [ ] **Step 5: Verify and commit locally**
+
+Run the complete Python and Node test suites, `git diff --check`, and the webpage/NIfTI unchanged audit. Commit locally without pushing or embedding the media in the webpage.
