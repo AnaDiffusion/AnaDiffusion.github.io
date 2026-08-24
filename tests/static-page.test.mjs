@@ -10,7 +10,9 @@ const testDirectory = dirname(fileURLToPath(import.meta.url));
 const pageRoot = resolve(testDirectory, '..');
 const pagePath = resolve(pageRoot, 'index.html');
 const cssPath = resolve(pageRoot, 'assets/css/main.css');
+const siteModulePath = resolve(pageRoot, 'assets/js/site.mjs');
 const volumeViewerPath = resolve(pageRoot, 'assets/js/volume-viewer.mjs');
+const continuousAssemblyPath = resolve(pageRoot, 'media/anadiffusion-assembly-transparent-continuous.webm');
 const assemblyVolumePath = resolve(pageRoot, 'volumes/assembly-parts-sample-01.nii.gz');
 const assemblyBuilderPath = resolve(pageRoot, 'scripts/build-colored-assembly.py');
 
@@ -80,6 +82,39 @@ test('uses the concise requested TLDR', () => {
     /<strong>AnaDiffusion<\/strong> builds a 3D brain MRI from <strong>anatomical parts<\/strong> — left\/right hemispheres and the cerebellum–brainstem — then <strong>assembles and globally refines<\/strong> them into one coherent volume, improving <strong>regional FID<\/strong> and enabling <strong>controllable part editing<\/strong> with <strong>no subject-specific segmentation maps<\/strong> at inference\./,
   );
   assert.doesNotMatch(abstract, /lowest FID across every region/);
+});
+
+test('uses the continuous assembly as a quiet accessible Abstract background', () => {
+  const html = readPage();
+  const css = readFileSync(cssPath, 'utf8');
+  const siteModule = readFileSync(siteModulePath, 'utf8');
+  const abstract = html.match(/<section class="paper-section abstract-section"[\s\S]*?<\/section>/)?.[0] ?? '';
+
+  assert.equal(existsSync(continuousAssemblyPath), true, 'Missing continuous transparent assembly animation');
+  assert.match(abstract, /<div class="abstract-motion" aria-hidden="true">/);
+  assert.match(
+    abstract,
+    /<video\s+data-abstract-motion\s+muted\s+loop\s+playsinline\s+preload="metadata"\s+poster="media\/anadiffusion-assembly-transparent-poster\.png"\s+tabindex="-1">/,
+  );
+  assert.match(
+    abstract,
+    /<source src="media\/anadiffusion-assembly-transparent-continuous\.webm\?v=20260824-1" type="video\/webm">/,
+  );
+  assert.doesNotMatch(abstract, /\b(?:autoplay|controls)\b/);
+
+  assert.match(css, /\.abstract-section\s*\{[^}]*position:\s*relative[^}]*isolation:\s*isolate[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.abstract-motion\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*z-index:\s*0/s);
+  assert.match(css, /\.abstract-motion\s*\{[^}]*pointer-events:\s*none/s);
+  assert.match(css, /\.abstract-motion video\s*\{[^}]*opacity:\s*\.1[^}]*transform:\s*translateX\(18%\)/s);
+  assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.abstract-motion video\s*\{[^}]*opacity:\s*\.07[^}]*transform:\s*translateX\(28%\)/);
+  assert.match(css, /\.abstract-section > \.reading-shell\s*\{[^}]*z-index:\s*1/s);
+
+  assert.match(siteModule, /function initAbstractMotion\(root\)/);
+  assert.match(siteModule, /prefers-reduced-motion:\s*reduce/);
+  assert.match(siteModule, /new IntersectionObserver/);
+  assert.match(siteModule, /video\.play\(\)/);
+  assert.match(siteModule, /video\.pause\(\)/);
+  assert.match(siteModule, /initAbstractMotion\(document\)/);
 });
 
 test('links the supplied paper and repository without invented destinations', () => {
@@ -326,10 +361,10 @@ test('loads complete progressive-enhancement modules', () => {
   for (const modulePath of modules) {
     assert.equal(existsSync(resolve(pageRoot, modulePath)), true, `Missing runtime module: ${modulePath}`);
   }
-  const siteModule = readFileSync(resolve(pageRoot, 'assets/js/site.mjs'), 'utf8');
+  const siteModule = readFileSync(siteModulePath, 'utf8');
   assert.match(siteModule, /initSampleGallery/);
   assert.doesNotMatch(siteModule, /initAnatomyExplorer|initFigureDialogs|showModal|data-figure-open/);
-  assert.match(html, /<script\s+type=["']module["']\s+src=["']assets\/js\/site\.mjs["']/);
+  assert.match(html, /<script\s+type=["']module["']\s+src=["']assets\/js\/site\.mjs\?v=20260824-1["']/);
 });
 
 test('contains the corrected paper citation without the obsolete figure-one note', () => {
@@ -451,6 +486,6 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260823-9["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260824-1["']>/,
   );
 });

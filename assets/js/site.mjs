@@ -60,6 +60,33 @@ function initTitleAssembly(root) {
   });
 }
 
+function initAbstractMotion(root) {
+  const video = root.querySelector('[data-abstract-motion]');
+  if (!video) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+  const section = video.closest('.abstract-section');
+  const play = () => {
+    const playback = video.play();
+    playback?.catch(() => {});
+  };
+
+  if (!section || !('IntersectionObserver' in window)) {
+    play();
+    return;
+  }
+
+  const observer = new IntersectionObserver(([entry]) => {
+    if (entry?.isIntersecting) {
+      play();
+    } else {
+      video.pause();
+    }
+  }, { threshold: 0.05 });
+
+  observer.observe(section);
+}
+
 navToggle?.addEventListener('click', () => {
   const expanded = navToggle.getAttribute('aria-expanded') === 'true';
   navToggle.setAttribute('aria-expanded', String(!expanded));
@@ -87,4 +114,10 @@ try {
   initTitleAssembly(document);
 } catch (error) {
   console.warn('AnaDiffusion title assembly fallback active.', error);
+}
+
+try {
+  initAbstractMotion(document);
+} catch (error) {
+  console.warn('AnaDiffusion Abstract motion fallback active.', error);
 }

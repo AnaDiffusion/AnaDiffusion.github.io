@@ -60,7 +60,8 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
   assert.doesNotMatch(abstract, /\b(?:autoplay|controls)\b/);
 
   assert.match(css, /\.abstract-section\s*\{[^}]*position:\s*relative[^}]*isolation:\s*isolate[^}]*overflow:\s*hidden/s);
-  assert.match(css, /\.abstract-motion\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*pointer-events:\s*none[^}]*z-index:\s*0/s);
+  assert.match(css, /\.abstract-motion\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*z-index:\s*0/s);
+  assert.match(css, /\.abstract-motion\s*\{[^}]*pointer-events:\s*none/s);
   assert.match(css, /\.abstract-motion video\s*\{[^}]*opacity:\s*\.1[^}]*transform:\s*translateX\(18%\)/s);
   assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.abstract-motion video\s*\{[^}]*opacity:\s*\.07[^}]*transform:\s*translateX\(28%\)/);
   assert.match(css, /\.abstract-section > \.reading-shell\s*\{[^}]*z-index:\s*1/s);
