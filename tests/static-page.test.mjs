@@ -105,8 +105,10 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
   assert.match(css, /\.abstract-section\s*\{[^}]*position:\s*relative[^}]*isolation:\s*isolate[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.abstract-motion\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*z-index:\s*0/s);
   assert.match(css, /\.abstract-motion\s*\{[^}]*pointer-events:\s*none/s);
-  assert.match(css, /\.abstract-motion video\s*\{[^}]*opacity:\s*\.3[^}]*transform:\s*translateX\(0\)/s);
-  assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.abstract-motion video\s*\{[^}]*opacity:\s*\.3[^}]*transform:\s*translateX\(0\)/);
+  assert.match(css, /\.abstract-section \.section-kicker,\s*\.abstract-section h2\s*\{[^}]*text-align:\s*center/s);
+  assert.match(css, /\.abstract-section h2\s*\{[^}]*max-width:\s*760px[^}]*margin-inline:\s*auto/s);
+  assert.match(css, /\.abstract-motion video\s*\{[^}]*opacity:\s*\.3[^}]*transform:\s*translateY\(120px\)/s);
+  assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.abstract-motion video\s*\{[^}]*opacity:\s*\.3[^}]*transform:\s*translateY\(120px\)/);
   assert.match(css, /\.abstract-section > \.reading-shell\s*\{[^}]*z-index:\s*1/s);
 
   assert.match(siteModule, /function initAbstractMotion\(root\)/);
@@ -486,6 +488,6 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260824-2["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260824-3["']>/,
   );
 });
