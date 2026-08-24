@@ -450,15 +450,14 @@ def render_animation(
     return mp4_path, webm_path, poster_path
 
 
-def render_transparent_animation(
-    output_dir: Path = MEDIA_DIR,
+def _render_transparent_video(
+    output_path: Path,
     *,
-    width: int = WIDTH,
-    height: int = HEIGHT,
-    mesh_step: int = 2,
-) -> tuple[Path, Path]:
-    """Render the same animation on alpha with every label removed."""
-    output_dir.mkdir(parents=True, exist_ok=True)
+    motion_mode: str,
+    width: int,
+    height: int,
+    mesh_step: int,
+) -> Path:
     masks, affine = load_part_masks()
     renderer = AssemblyRenderer(
         masks,
@@ -468,14 +467,11 @@ def render_transparent_animation(
         mesh_step=mesh_step,
         transparent=True,
         show_text=False,
+        motion_mode=motion_mode,
     )
-
-    webm_path = output_dir / "anadiffusion-assembly-transparent.webm"
-    poster_path = output_dir / "anadiffusion-assembly-transparent-poster.png"
-
     try:
         with tempfile.TemporaryDirectory(
-            prefix="anadiffusion-assembly-transparent-"
+            prefix=f"anadiffusion-assembly-{motion_mode}-"
         ) as temp_dir:
             frame_dir = Path(temp_dir)
             frame_count = int(DURATION * FPS)
@@ -488,10 +484,30 @@ def render_transparent_animation(
 
             _encode_transparent_webm(
                 frame_dir / "frame-%04d.png",
-                webm_path,
+                output_path,
             )
     finally:
         renderer.close()
+    return output_path
+
+
+def render_transparent_animation(
+    output_dir: Path = MEDIA_DIR,
+    *,
+    width: int = WIDTH,
+    height: int = HEIGHT,
+    mesh_step: int = 2,
+) -> tuple[Path, Path]:
+    """Render the approved assemble-then-turn animation on alpha."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    webm_path = _render_transparent_video(
+        output_dir / "anadiffusion-assembly-transparent.webm",
+        motion_mode="assembled",
+        width=width,
+        height=height,
+        mesh_step=mesh_step,
+    )
+    poster_path = output_dir / "anadiffusion-assembly-transparent-poster.png"
 
     render_transparent_poster(
         poster_path,
@@ -500,6 +516,24 @@ def render_transparent_animation(
         mesh_step=1,
     )
     return webm_path, poster_path
+
+
+def render_continuous_transparent_animation(
+    output_dir: Path = MEDIA_DIR,
+    *,
+    width: int = WIDTH,
+    height: int = HEIGHT,
+    mesh_step: int = 2,
+) -> Path:
+    """Render assembly and rotation concurrently on a transparent canvas."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return _render_transparent_video(
+        output_dir / "anadiffusion-assembly-transparent-continuous.webm",
+        motion_mode="continuous",
+        width=width,
+        height=height,
+        mesh_step=mesh_step,
+    )
 
 
 def render_poster(
@@ -622,6 +656,11 @@ def main() -> None:
         action="store_true",
         help="Render a transparent VP9 WebM and text-free RGBA poster",
     )
+    parser.add_argument(
+        "--continuous-assembly",
+        action="store_true",
+        help="Render the transparent assembly during one continuous orbit",
+    )
     args = parser.parse_args()
     if args.preview_strip:
         path = render_preview_strip(
@@ -638,6 +677,15 @@ def main() -> None:
             width=args.width,
             height=args.height,
             mesh_step=1,
+        )
+        print(_display_path(path))
+        return
+    if args.continuous_assembly:
+        path = render_continuous_transparent_animation(
+            args.output_dir,
+            width=args.width,
+            height=args.height,
+            mesh_step=args.mesh_step,
         )
         print(_display_path(path))
         return

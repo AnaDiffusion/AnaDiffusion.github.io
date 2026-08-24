@@ -36,6 +36,13 @@ class RendererPresenceTests(unittest.TestCase):
         external = Path("/private/tmp/anadiffusion-example.webm")
         self.assertEqual(renderer._display_path(external), str(external))
 
+    def test_continuous_transparent_renderer_has_a_dedicated_cli(self):
+        renderer = load_renderer()
+        self.assertTrue(callable(renderer.render_continuous_transparent_animation))
+        source = RENDERER_PATH.read_text(encoding="utf-8")
+        self.assertIn("--continuous-assembly", source)
+        self.assertIn("anadiffusion-assembly-transparent-continuous.webm", source)
+
 
 @unittest.skipUnless(RENDERER_PATH.exists(), "animation renderer is missing")
 class AnimationStateTests(unittest.TestCase):
