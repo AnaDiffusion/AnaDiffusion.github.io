@@ -1,0 +1,77 @@
+# Anatomical Assembly Animation Design
+
+## Goal
+
+Create a silent cinematic animation that illustrates AnaDiffusion's part-to-whole assembly using the three staged RGB24 NIfTI assets:
+
+1. `volumes/assembly-left-sample-01.nii.gz`
+2. `volumes/assembly-hemispheres-sample-01.nii.gz`
+3. `volumes/assembly-parts-sample-01.nii.gz`
+
+The animation is a standalone deliverable. This task does not add it to the webpage.
+
+## Selected visual direction
+
+Use the approved **Cinematic 3D build** direction: a single three-quarter anatomical render rotates gently while the right hemisphere and cerebellum–brainstem fade into their final locations. Minimal stage labels explain the progression without competing with the anatomy.
+
+Two alternatives were considered:
+
+- A fixed-camera 3D crossfade would make regional comparison easier but feel less engaging on the project page.
+- A synchronized multiplanar view would be more explicitly scientific but visually dense at video and mobile sizes.
+
+## Rendering approach
+
+Extract one surface for each anatomical region from the staged RGB volumes:
+
+- The left-hemisphere foreground comes directly from the left-only assembly.
+- The right-hemisphere foreground is the bilateral-hemisphere foreground minus the left-only foreground.
+- The cerebellum–brainstem foreground is the complete-assembly foreground minus the bilateral-hemisphere foreground.
+
+Generate smoothed meshes with `scikit-image` marching cubes, preserving the corrected common affine and relative placement. Render the three cached meshes offscreen with Matplotlib using an orthographic camera, soft directional shading, the established lavender/green/butter colors, and the page's near-black background.
+
+Browser-canvas capture from NiiVue was rejected because it would match the live viewer but introduce fragile browser timing and WebGL screenshot dependencies. A 2D projection renderer was rejected because it would not deliver the approved 3D orbit.
+
+## Timeline and motion
+
+The final animation is 8 seconds at 24 frames per second:
+
+- `0.0–0.5 s`: left hemisphere fades in from black.
+- `0.5–2.4 s`: left hemisphere holds; label reads **1 · Left hemisphere**.
+- `2.4–3.0 s`: right hemisphere fades into place.
+- `3.0–4.6 s`: both hemispheres hold; label reads **2 · Bilateral hemispheres**.
+- `4.6–5.2 s`: cerebellum–brainstem fades into place.
+- `5.2–7.2 s`: the complete assembly holds; label reads **3 · Complete assembly**.
+- `7.2–8.0 s`: anatomy and labels fade to black for a clean loop restart.
+
+The camera follows a slow sinusoidal three-quarter orbit and returns to its starting angle at 8 seconds, preventing a camera jump at the loop boundary. Anatomy is never translated or rescaled during stage transitions; new parts fade into their corrected final-canvas positions.
+
+## Frame composition
+
+- Resolution: `1280 × 720` pixels.
+- Background: `#0d091b`.
+- Anatomy: lavender left hemisphere, green right hemisphere, butter cerebellum–brainstem.
+- Persistent small heading: **AnaDiffusion · Part-to-whole assembly**.
+- Stage label: upper-left, white with restrained opacity.
+- No axes, crosshairs, orientation letters, borders, watermark, or audio.
+- Camera and object framing remain constant across every stage.
+
+## Deliverables
+
+- `media/anadiffusion-assembly.mp4`: H.264, `yuv420p`, web-compatible primary video.
+- `media/anadiffusion-assembly.webm`: VP9 web alternative.
+- `media/anadiffusion-assembly-poster.png`: final complete-assembly poster frame.
+- `scripts/render-assembly-animation.py`: deterministic source renderer.
+
+Temporary PNG frames are written outside the repository and deleted after encoding.
+
+## Verification
+
+Automated tests will cover the stage-opacity schedule, part-mask separation, shared final-canvas geometry, and deterministic frame dimensions. Final validation will use `ffprobe` to confirm both videos are `1280 × 720`, 8 seconds, and silent. The poster must be `1280 × 720`, and the existing webpage sources and NIfTI files must remain unchanged.
+
+## Non-goals
+
+- Do not embed or autoplay the animation on the webpage.
+- Do not modify the three assembly NIfTIs.
+- Do not add narration, music, or sound effects.
+- Do not generate a GIF; MP4 and WebM provide better quality and file size for this use.
+- Do not push the animation unless separately requested.
