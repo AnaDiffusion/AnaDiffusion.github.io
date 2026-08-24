@@ -40,7 +40,7 @@ WIDTH = 1280
 HEIGHT = 720
 FPS = 24
 DURATION = 12.0
-PART_OPACITY = 0.70
+PART_OPACITY = 0.50
 
 BACKGROUND = "#0d091b"
 BACKGROUND_RGB = (13, 9, 27)
@@ -79,7 +79,7 @@ def camera_angles(time_s: float) -> tuple[float, float]:
     """Return a full assembled-anatomy turn that loops without a visual jump."""
     loop_time = float(time_s) % DURATION
     turn_progress = _smoothstep(5.2, 11.2, loop_time)
-    elevation = 18.0 + 5.0 * math.sin(2.0 * math.pi * turn_progress)
+    elevation = 45.0
     azimuth = -38.0 + 360.0 * turn_progress
     return elevation, azimuth
 

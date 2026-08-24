@@ -55,14 +55,14 @@ class AnimationStateTests(unittest.TestCase):
         _, ending_azimuth = self.renderer.camera_angles(11.2)
         self.assertAlmostEqual(ending_azimuth - starting_azimuth, 360.0)
 
-    def test_complete_assembly_changes_elevation_during_the_turn(self):
-        high_elevation, _ = self.renderer.camera_angles(7.0)
-        low_elevation, _ = self.renderer.camera_angles(10.0)
-        self.assertGreaterEqual(abs(high_elevation - low_elevation), 7.0)
+    def test_camera_holds_the_approved_forty_five_degree_elevation(self):
+        for time_s in (0.0, 5.2, 8.2, 11.2, 12.0):
+            elevation, _ = self.renderer.camera_angles(time_s)
+            self.assertEqual(elevation, 45.0)
 
     def test_anatomical_surfaces_use_the_approved_translucency(self):
         opacity = getattr(self.renderer, "PART_OPACITY", 1.0)
-        self.assertAlmostEqual(opacity, 0.70)
+        self.assertAlmostEqual(opacity, 0.50)
 
 
 @unittest.skipUnless(RENDERER_PATH.exists(), "animation renderer is missing")
