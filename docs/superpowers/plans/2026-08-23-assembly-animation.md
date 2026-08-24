@@ -234,6 +234,8 @@ Render all 192 frames and replace the MP4, WebM, and poster. Inspect a one-frame
 
 ### Task 6: Show a full translucent 360-degree view
 
+> Historical intermediate refinement. Task 7 supersedes its 70% opacity and variable-elevation values.
+
 **Files:**
 - Modify: `tests/test_assembly_animation.py`
 - Modify: `scripts/render-assembly-animation.py`
@@ -282,3 +284,46 @@ Render 288 frames at 24 fps, encode both formats, regenerate the poster, and ins
 - [ ] **Step 5: Verify and commit locally**
 
 Run the complete Python and Node test suites, `git diff --check`, and the webpage/NIfTI unchanged audit. Commit locally without pushing or embedding the media in the webpage.
+
+### Task 7: Use a fixed elevated translucent view
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Regenerate: `media/anadiffusion-assembly.mp4`
+- Regenerate: `media/anadiffusion-assembly.webm`
+- Regenerate: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write failing elevation and opacity tests**
+
+Replace the varying-elevation assertion with checks that `camera_angles()` returns exactly 45 degrees of elevation at seconds `0.0`, `5.2`, `8.2`, `11.2`, and `12.0`. Change the maximum surface-opacity expectation from `0.70` to `0.50`. Keep the 360-degree azimuth and 12-second media assertions unchanged.
+
+```python
+for time_s in (0.0, 5.2, 8.2, 11.2, 12.0):
+    elevation, _ = renderer.camera_angles(time_s)
+    self.assertEqual(elevation, 45.0)
+self.assertAlmostEqual(renderer.PART_OPACITY, 0.50)
+```
+
+- [ ] **Step 2: Run the focused tests and verify RED**
+
+Run:
+
+```bash
+MPLCONFIGDIR=/tmp/anadiffusion-mpl-cache XDG_CACHE_HOME=/tmp/anadiffusion-xdg-cache /opt/anaconda3/bin/python3 -m unittest tests.test_assembly_animation.AnimationStateTests -v
+```
+
+Expected: FAIL because the current renderer uses variable elevation around 18 degrees and `0.70` opacity.
+
+- [ ] **Step 3: Implement the fixed elevated view**
+
+Set `PART_OPACITY = 0.50` and return constant elevation `45.0` from `camera_angles()`. Preserve the existing smoothstep `turn_progress` and 360-degree azimuth:
+
+```python
+elevation = 45.0
+azimuth = -38.0 + 360.0 * turn_progress
+```
+
+- [ ] **Step 4: Regenerate, inspect, verify, and commit**
+
+Render all 288 frames and replace both videos and the poster. Inspect the preview, encoded one-frame-per-second contact sheet, and poster for full 360-degree coverage, stable 45-degree elevation, 50% translucency, and correct depth sorting. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
