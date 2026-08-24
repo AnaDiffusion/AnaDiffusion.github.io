@@ -405,6 +405,21 @@ test('renders one precomposed colored assembly without viewer overlays', () => {
   assert.doesNotMatch(assemblyBranch, /colormap|hideBackground/);
 });
 
+test('locks scalar volume color scaling to minus one through one', () => {
+  const viewerModule = readFileSync(volumeViewerPath, 'utf8');
+
+  assert.match(viewerModule, /const INTENSITY_WINDOW = Object\.freeze\(\{ cal_min: -1, cal_max: 1 \}\)/);
+  assert.match(
+    viewerModule,
+    /nv\.loadVolumes\(\[\{ url: VOLUMES\[which\]\.url, colormap: 'gray', opacity: 1, \.\.\.INTENSITY_WINDOW \}\]\)/,
+  );
+  assert.match(viewerModule, /nv\.onImageLoaded\s*=\s*\(volume\)\s*=>/);
+  assert.match(viewerModule, /RGB_DATATYPES\.has\(volume\?\.hdr\?\.datatypeCode\)/);
+  assert.match(viewerModule, /volume\.cal_min = INTENSITY_WINDOW\.cal_min/);
+  assert.match(viewerModule, /volume\.cal_max = INTENSITY_WINDOW\.cal_max/);
+  assert.match(viewerModule, /nv\.updateGLVolume\(\)/);
+});
+
 test('publishes the three supplied parts as one RGB NIfTI volume', () => {
   assert.equal(existsSync(assemblyVolumePath), true, 'Missing precomposed assembly volume');
 
@@ -427,7 +442,7 @@ test('cache-busts the viewer module so viewer updates reach the browser', () => 
 
   assert.match(
     html,
-    /<script\s+type=["']module["']\s+src=["']assets\/js\/volume-viewer\.mjs\?v=20260820-7["']><\/script>/,
+    /<script\s+type=["']module["']\s+src=["']assets\/js\/volume-viewer\.mjs\?v=20260823-8["']><\/script>/,
   );
 });
 

@@ -27,6 +27,8 @@ const VOLUMES = {
   cb:    { url: BASE + 'cb-sample-01.nii.gz', label: 'Cerebellum–brainstem complex' },
   assembly: { url: BASE + 'assembly-parts-sample-01.nii.gz', label: 'Colored assembly' },
 };
+const INTENSITY_WINDOW = Object.freeze({ cal_min: -1, cal_max: 1 });
+const RGB_DATATYPES = new Set([128, 2304]); // NIfTI RGB24 and RGBA32
 
 export async function initVolumeViewer(root = document) {
   const stage = root.querySelector('[data-volume-viewer]');
@@ -53,6 +55,12 @@ export async function initVolumeViewer(root = document) {
       dragAndDropEnabled: true,
       isColorbar: false,
     });
+    nv.onImageLoaded = (volume) => {
+      if (RGB_DATATYPES.has(volume?.hdr?.datatypeCode)) return;
+      volume.cal_min = INTENSITY_WINDOW.cal_min;
+      volume.cal_max = INTENSITY_WINDOW.cal_max;
+      nv.updateGLVolume();
+    };
     await nv.attachToCanvas(canvas);
   } catch (err) {
     setStatus('The viewer needs a WebGL2 browser with internet access to load NiiVue. ' + (err?.message ?? ''));
@@ -66,7 +74,7 @@ export async function initVolumeViewer(root = document) {
         await nv.loadVolumes([{ url: VOLUMES.assembly.url, opacity: 1 }]);
         setStatus('Assembled in world coordinates — left (lavender) + right (green) hemispheres + cerebellum–brainstem (butter).');
       } else {
-        await nv.loadVolumes([{ url: VOLUMES[which].url, colormap: 'gray', opacity: 1 }]);
+        await nv.loadVolumes([{ url: VOLUMES[which].url, colormap: 'gray', opacity: 1, ...INTENSITY_WINDOW }]);
         setStatus(VOLUMES[which].label + ' · drag to rotate / move · scroll to zoom');
       }
     } catch (err) {
