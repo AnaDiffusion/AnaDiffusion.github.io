@@ -381,3 +381,61 @@ This preserves 45 degrees before the turn and at the loop boundary, exposes the 
 - [ ] **Step 4: Verify, regenerate, inspect, and commit**
 
 Run the focused test, render the preview strip, then regenerate all 288 frames and replace both videos and the poster. Inspect an encoded one-frame-per-second contact sheet to confirm the brief inferior view, seamless 45-degree return, complete 360-degree coverage, 50% opacity, and correct depth sorting. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
+
+### Task 9: Slow the complete-assembly turn
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Regenerate: `media/anadiffusion-assembly.mp4`
+- Regenerate: `media/anadiffusion-assembly.webm`
+- Regenerate: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write failing 16-second timing tests**
+
+Update the loop, stage, camera, and media assertions to protect the longer timeline:
+
+```python
+self.assertEqual(state(12.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
+self.assertEqual(state(16.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
+self.assertEqual(renderer.camera_angles(0.0), renderer.camera_angles(16.0))
+
+_, starting_azimuth = renderer.camera_angles(5.2)
+_, ending_azimuth = renderer.camera_angles(15.2)
+self.assertAlmostEqual(ending_azimuth - starting_azimuth, 360.0)
+
+expected_elevations = {5.2: 45.0, 10.2: -15.0, 15.2: 45.0}
+for time_s, expected in expected_elevations.items():
+    elevation, _ = renderer.camera_angles(time_s)
+    self.assertAlmostEqual(elevation, expected)
+```
+
+Rename the media test to `test_videos_are_silent_sixteen_second_720p_loops` and assert a duration of `16.0` seconds.
+
+- [ ] **Step 2: Run the focused tests and verify RED**
+
+Run:
+
+```bash
+MPLCONFIGDIR=/tmp/anadiffusion-mpl-cache XDG_CACHE_HOME=/tmp/anadiffusion-xdg-cache /opt/anaconda3/bin/python3 -m unittest tests.test_assembly_animation.AnimationStateTests tests.test_assembly_animation.MediaOutputTests -v
+```
+
+Expected: FAIL because the current renderer and encoded media remain 12 seconds and complete the turn at 11.2 seconds.
+
+- [ ] **Step 3: Implement the 16-second timeline**
+
+Set `DURATION = 16.0`. Preserve all assembly entrance times, but move the turn end and fade boundaries:
+
+```python
+if time_s >= 15.2:
+    fade_out = 1.0 - _smoothstep(15.2, 16.0, time_s)
+
+turn_progress = _smoothstep(5.2, 15.2, loop_time)
+title_alpha = 1.0 - _smoothstep(15.4, 16.0, time_s)
+```
+
+Keep the existing azimuth, inferior-view elevation curve, 50% opacity, stage labels, and poster timestamp unchanged.
+
+- [ ] **Step 4: Verify, regenerate, inspect, and commit**
+
+Run the focused tests, render all 384 frames, and replace both videos and the poster. Inspect an encoded two-second contact sheet for calmer full-turn motion, the midpoint inferior view, seamless return, 50% opacity, and correct depth sorting. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
