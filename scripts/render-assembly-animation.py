@@ -77,10 +77,23 @@ def stage_state(time_s: float) -> dict[str, float]:
     return {"left": left, "right": right, "cb": cb}
 
 
-def camera_angles(time_s: float) -> tuple[float, float]:
-    """Return a full assembled-anatomy turn that loops without a visual jump."""
+def camera_angles(
+    time_s: float,
+    *,
+    motion_mode: str = "assembled",
+) -> tuple[float, float]:
+    """Return the approved loop for the selected assembly motion mode."""
+    turn_starts = {
+        "assembled": 5.2,
+        "continuous": 0.0,
+    }
+    try:
+        turn_start = turn_starts[motion_mode]
+    except KeyError as error:
+        raise ValueError(f"unknown camera motion mode: {motion_mode}") from error
+
     loop_time = float(time_s) % DURATION
-    turn_progress = _smoothstep(5.2, 15.2, loop_time)
+    turn_progress = _smoothstep(turn_start, 15.2, loop_time)
     elevation = 45.0 - 60.0 * math.sin(math.pi * turn_progress) ** 4
     azimuth = -38.0 + 360.0 * turn_progress
     return elevation, azimuth
@@ -171,12 +184,15 @@ class AssemblyRenderer:
         mesh_step: int = 2,
         transparent: bool = False,
         show_text: bool = True,
+        motion_mode: str = "assembled",
     ) -> None:
         self.width = int(width)
         self.height = int(height)
         self.dpi = 100
         self.transparent = bool(transparent)
         self.show_text = bool(show_text)
+        self.motion_mode = motion_mode
+        camera_angles(0.0, motion_mode=self.motion_mode)
         canvas_color = (0.0, 0.0, 0.0, 0.0) if self.transparent else BACKGROUND
 
         self.figure = Figure(
@@ -300,7 +316,10 @@ class AssemblyRenderer:
             facecolors[self.face_part_slices[name], 3] = alpha * PART_OPACITY
         self.surface_collection.set_facecolor(facecolors)
 
-        elevation, azimuth = camera_angles(time_s)
+        elevation, azimuth = camera_angles(
+            time_s,
+            motion_mode=self.motion_mode,
+        )
         self.axes.view_init(elev=elevation, azim=azimuth, roll=0.0)
         if self.show_text:
             self.stage_text.set_text(_stage_label(time_s))

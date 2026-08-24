@@ -88,6 +88,49 @@ class AnimationStateTests(unittest.TestCase):
         self.assertAlmostEqual(getattr(self.renderer, "PLAYBACK_RATE", 1.0), 1.25)
         self.assertEqual(getattr(self.renderer, "OUTPUT_FPS", self.renderer.FPS), 30)
 
+    def test_continuous_mode_turns_while_parts_are_assembling(self):
+        _, default_start = self.renderer.camera_angles(0.0)
+        _, default_during_assembly = self.renderer.camera_angles(2.4)
+        self.assertEqual(default_start, default_during_assembly)
+
+        _, continuous_start = self.renderer.camera_angles(
+            0.0,
+            motion_mode="continuous",
+        )
+        _, continuous_during_assembly = self.renderer.camera_angles(
+            2.4,
+            motion_mode="continuous",
+        )
+        self.assertGreater(continuous_during_assembly, continuous_start)
+
+    def test_continuous_mode_completes_one_smooth_loop(self):
+        start_elevation, start_azimuth = self.renderer.camera_angles(
+            0.0,
+            motion_mode="continuous",
+        )
+        midpoint_elevation, _ = self.renderer.camera_angles(
+            7.6,
+            motion_mode="continuous",
+        )
+        end_elevation, end_azimuth = self.renderer.camera_angles(
+            15.2,
+            motion_mode="continuous",
+        )
+        loop_elevation, loop_azimuth = self.renderer.camera_angles(
+            16.0,
+            motion_mode="continuous",
+        )
+
+        self.assertAlmostEqual(end_azimuth - start_azimuth, 360.0)
+        self.assertAlmostEqual(midpoint_elevation, -15.0)
+        self.assertAlmostEqual(end_elevation, start_elevation)
+        self.assertAlmostEqual(loop_elevation, start_elevation)
+        self.assertAlmostEqual(loop_azimuth, start_azimuth)
+
+    def test_camera_rejects_an_unknown_motion_mode(self):
+        with self.assertRaisesRegex(ValueError, "unknown camera motion mode"):
+            self.renderer.camera_angles(1.0, motion_mode="unknown")
+
 
 @unittest.skipUnless(RENDERER_PATH.exists(), "animation renderer is missing")
 class AnatomicalMaskTests(unittest.TestCase):
