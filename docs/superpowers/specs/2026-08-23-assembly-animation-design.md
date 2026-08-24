@@ -43,11 +43,13 @@ The final animation is 12 seconds at 24 frames per second:
 - `5.2–11.2 s`: the complete assembly makes one full 360-degree turn; label reads **3 · Complete assembly**.
 - `11.2–12.0 s`: anatomy and labels fade to black for a clean loop restart.
 
-The camera holds a 45-degree elevation while the anatomy assembles and throughout one smooth 360-degree azimuth turn during the complete-assembly hold. This consistent elevated angle reveals superior structure from every side. The camera reaches the same physical orientation before the closing fade and at the loop restart, preventing a visible jump. Anatomy is never translated or rescaled during stage transitions; new parts fade into their corrected final-canvas positions.
+The camera holds a 45-degree elevation while the anatomy assembles. During the complete assembly's smooth 360-degree azimuth turn, the camera makes one brief inferior-view dip: it eases from 45 degrees to a restrained minimum of -15 degrees at the orbit midpoint, then returns to 45 degrees before the closing fade. The fourth-power sine curve keeps most of the turn elevated while exposing the underside without making the anatomy feel inverted. The camera reaches the same physical orientation before the closing fade and at the loop restart, preventing a visible jump. Anatomy is never translated or rescaled during stage transitions; new parts fade into their corrected final-canvas positions.
 
 ### Approved visibility refinement
 
 The complete assembly rotates through all 360 degrees during the `5.2–11.2 s` hold, providing anterior, posterior, and both lateral views at a readable pace. Once a part has finished fading in, its surface remains at 50% opacity rather than becoming fully opaque. The stronger translucency reveals deeper overlapping anatomical structure while preserving the lavender, green, and butter part identities.
+
+For turn progress `p` from zero to one, elevation is `45 - 60 sin^4(pi p)` degrees. This yields 45 degrees at the start and end, 30 degrees at each quarter-turn, and -15 degrees at the midpoint. Azimuth, duration, opacity, framing, stage timing, labels, and encoders remain unchanged.
 
 ## Frame composition
 

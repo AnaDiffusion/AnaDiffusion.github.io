@@ -327,3 +327,55 @@ azimuth = -38.0 + 360.0 * turn_progress
 - [ ] **Step 4: Regenerate, inspect, verify, and commit**
 
 Render all 288 frames and replace both videos and the poster. Inspect the preview, encoded one-frame-per-second contact sheet, and poster for full 360-degree coverage, stable 45-degree elevation, 50% translucency, and correct depth sorting. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
+
+### Task 8: Briefly reveal the inferior surface
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Regenerate: `media/anadiffusion-assembly.mp4`
+- Regenerate: `media/anadiffusion-assembly.webm`
+- Regenerate: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write a failing inferior-view camera test**
+
+Replace the fixed-elevation test with an assertion that the camera starts and ends at 45 degrees, remains elevated at both quarter-turns, and reaches a restrained -15-degree inferior view at the midpoint:
+
+```python
+def test_camera_briefly_reveals_inferior_surface_then_returns(self):
+    expected_elevations = {
+        5.2: 45.0,
+        6.7: 30.0,
+        8.2: -15.0,
+        9.7: 30.0,
+        11.2: 45.0,
+    }
+    for time_s, expected in expected_elevations.items():
+        elevation, _ = self.renderer.camera_angles(time_s)
+        self.assertAlmostEqual(elevation, expected)
+```
+
+- [ ] **Step 2: Run the focused test and verify RED**
+
+Run:
+
+```bash
+MPLCONFIGDIR=/tmp/anadiffusion-mpl-cache XDG_CACHE_HOME=/tmp/anadiffusion-xdg-cache /opt/anaconda3/bin/python3 -m unittest tests.test_assembly_animation.AnimationStateTests -v
+```
+
+Expected: FAIL at the midpoint because the current camera elevation remains fixed at 45 degrees.
+
+- [ ] **Step 3: Implement the minimal eased elevation curve**
+
+Keep the existing 360-degree azimuth and compute elevation from the same turn progress:
+
+```python
+elevation = 45.0 - 60.0 * math.sin(math.pi * turn_progress) ** 4
+azimuth = -38.0 + 360.0 * turn_progress
+```
+
+This preserves 45 degrees before the turn and at the loop boundary, exposes the underside briefly, and changes no anatomical surface or opacity behavior.
+
+- [ ] **Step 4: Verify, regenerate, inspect, and commit**
+
+Run the focused test, render the preview strip, then regenerate all 288 frames and replace both videos and the poster. Inspect an encoded one-frame-per-second contact sheet to confirm the brief inferior view, seamless 45-degree return, complete 360-degree coverage, 50% opacity, and correct depth sorting. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
