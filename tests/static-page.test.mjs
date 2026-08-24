@@ -54,12 +54,40 @@ test('uses the corrected paper identity and primary claims', () => {
   assert.doesNotMatch(html, /May 17, 2026|34\.33|0\.24/);
 });
 
+test('presents the abstract contributions as four bullets', () => {
+  const html = readPage();
+  const css = readFileSync(cssPath, 'utf8');
+  const abstract = html.match(/<section class="paper-section abstract-section"[\s\S]*?<\/section>/)?.[0] ?? '';
+
+  assert.match(abstract, /<ul class="abstract-contributions" aria-label="AnaDiffusion contributions">/);
+  assert.equal([...abstract.matchAll(/<li>/g)].length, 4);
+  assert.match(abstract, /We introduce <strong>AnaDiffusion<\/strong>, a compositional latent diffusion framework/);
+  assert.match(abstract, /We propose a part-to-whole latent refinement/);
+  assert.match(abstract, /left-right canonicalization and side-indicator conditioning/);
+  assert.match(abstract, /without requiring subject-specific dense segmentation maps at inference time/);
+  assert.doesNotMatch(abstract, /To address these limitations|On the subject-disjoint ADNI test split/);
+  assert.match(css, /\.abstract-contributions\s*\{[^}]*font-size:\s*clamp\(1\.2rem,\s*1\.6vw,\s*1\.45rem\)/s);
+  assert.match(css, /\.abstract-contributions\s*\{[^}]*display:\s*block[^}]*column-count:\s*1/s);
+  assert.doesNotMatch(abstract, /class="contribution-list"/);
+});
+
+test('uses the concise requested TLDR', () => {
+  const html = readPage();
+  const abstract = html.match(/<section class="paper-section abstract-section"[\s\S]*?<\/section>/)?.[0] ?? '';
+
+  assert.match(
+    abstract,
+    /<strong>AnaDiffusion<\/strong> builds a 3D brain MRI from <strong>anatomical parts<\/strong> — left\/right hemispheres and the cerebellum–brainstem — then <strong>assembles and globally refines<\/strong> them into one coherent volume, improving <strong>regional FID<\/strong> and enabling <strong>controllable part editing<\/strong> with <strong>no subject-specific segmentation maps<\/strong> at inference\./,
+  );
+  assert.doesNotMatch(abstract, /lowest FID across every region/);
+});
+
 test('links the supplied paper and repository without invented destinations', () => {
   const html = readPage();
 
   assert.match(html, /href=["']paper\.pdf["']/);
   assert.match(html, /https:\/\/github\.com\/phai-lab\/AnaDiffusion\.git/);
-  assert.match(html, /https:\/\/github\.com\/tracyhann\/AnaDiffusion-project-page/);
+  assert.match(html, /https:\/\/anadiffusion\.github\.io\//);
   assert.doesNotMatch(html, /arxiv\.org|youtube\.com|VIDEO_ID/);
   assert.doesNotMatch(html, /href=["']#["']/);
 });
@@ -106,18 +134,19 @@ test('uses the supplied teaser as Figure 1', () => {
   const figure = readFileSync(resolve(pageRoot, 'images/teaser.png'));
   const digest = createHash('sha256').update(figure).digest('hex');
 
-  assert.equal(digest, '39174e58622485c77ee0a837716bf7afddc4bba1da29d0159b78c9547e91b0be');
-  assert.match(html, /href="images\/teaser\.png"[^>]*aria-label="Open Figure 1 at full resolution"/);
-  assert.match(html, /src="images\/teaser\.png" width="2800" height="1595"/);
-  assert.match(html, /alt="AnaDiffusion Figure 1 comparing baseline anatomical failures with AnaDiffusion outputs, a MedicalNet FID radar chart, and a SynthSeg effect-size comparison"/);
-  assert.match(html, /class="full-resolution-link" href="images\/teaser\.png"/);
+  assert.equal(digest, 'c26d7cd9a6fdda1023010dcb4485fd6d60a863d5848b09d87c869982c1ae200b');
+  assert.match(html, /href="images\/teaser\.png\?v=c26d7cd9"[^>]*aria-label="Open Figure 1 at full resolution"/);
+  assert.match(html, /src="images\/teaser\.png\?v=c26d7cd9" width="1990" height="1110"/);
+  assert.match(html, /alt="AnaDiffusion Figure 1 comparing baseline anatomical failures with AnaDiffusion outputs, a MedicalNet FID radar chart, and a SynthSeg Cohen's effect-size radar chart"/);
+  assert.match(html, /class="full-resolution-link" href="images\/teaser\.png\?v=c26d7cd9"/);
   assert.doesNotMatch(html, /(?:src|href)="images\/figure-1-overview\.png"/);
 });
 
 test('includes canonical and social metadata from the paper', () => {
   const html = readPage();
 
-  assert.match(html, /rel=["']canonical["'][^>]+https:\/\/github\.com\/tracyhann\/AnaDiffusion-project-page/);
+  assert.match(html, /rel=["']canonical["'][^>]+https:\/\/anadiffusion\.github\.io\//);
+  assert.match(html, /property=["']og:url["'][^>]+https:\/\/anadiffusion\.github\.io\//);
   assert.match(html, /property=["']og:title["'][^>]+AnaDiffusion/);
   assert.match(html, /name=["']description["'][^>]+anatomically compositional/i);
 });
@@ -125,7 +154,7 @@ test('includes canonical and social metadata from the paper', () => {
 test('keeps every paper figure accessible without JavaScript', () => {
   const html = readPage();
 
-  assert.match(html, /<a[^>]+data-paper-figure=["']1["'][^>]+href=["']images\/teaser\.png["']/);
+  assert.match(html, /<a[^>]+data-paper-figure=["']1["'][^>]+href=["']images\/teaser\.png\?v=c26d7cd9["']/);
   for (let number = 2; number <= 3; number += 1) {
     assert.match(html, new RegExp(`<a[^>]+data-paper-figure=["']${number}["'][^>]+href=["']images/figure-${number}-[^"']+\\.png["']`));
   }
@@ -137,7 +166,7 @@ test('keeps every paper figure accessible without JavaScript', () => {
 test('displays every research figure completely in the main reading flow', () => {
   const html = readPage();
 
-  assert.match(html, /src=["']images\/teaser\.png["']/);
+  assert.match(html, /src=["']images\/teaser\.png\?v=c26d7cd9["']/);
   assert.match(html, /Figure 1/);
   for (let number = 2; number <= 3; number += 1) {
     assert.match(html, new RegExp(`src=["']images/figure-${number}-[^"']+\\.png["']`));
@@ -238,6 +267,18 @@ test('implements a readable evidence-first responsive design system', () => {
   assert.match(css, /@media\s*\(max-width:\s*720px\)/);
 });
 
+test('scales the publication header typography responsively', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(css, /\.publication-heading\s*\{[^}]*width:\s*min\(1180px,\s*calc\(100vw - 64px\)\)/s);
+  assert.match(css, /\.paper-subtitle\s*\{[^}]*font-size:\s*clamp\(2rem,\s*4vw,\s*3\.5rem\)/s);
+  assert.match(css, /\.authors\s*\{[^}]*font-size:\s*clamp\(1\.05rem,\s*1\.35vw,\s*1\.3rem\)/s);
+  assert.match(css, /\.affiliations\s*\{[^}]*font-size:\s*clamp\(\.98rem,\s*1\.15vw,\s*1\.15rem\)/s);
+  assert.match(css, /\.author-note\s*\{[^}]*font-size:\s*clamp\(\.9rem,\s*1vw,\s*1rem\)/s);
+  assert.match(css, /\.hero-summary\s*\{[^}]*font-size:\s*clamp\(1\.35rem,\s*1\.9vw,\s*1\.7rem\)/s);
+  assert.match(css, /@media \(max-width:\s*820px\)[\s\S]*\.publication-heading\s*\{[^}]*width:\s*calc\(100vw - 34px\)/);
+});
+
 test('keeps explanatory cards compact and groups each number with its copy', () => {
   const css = readFileSync(cssPath, 'utf8');
 
@@ -324,7 +365,7 @@ test('uses a smaller square viewer beside a vertical volume rail', () => {
   const css = readFileSync(cssPath, 'utf8');
 
   assert.match(html, /<div class="viewer-viewport">[\s\S]*data-volume-viewer[\s\S]*data-viewer-status/);
-  assert.match(css, /\.viewer-shell\s*\{[^}]*grid-template-columns:\s*210px minmax\(0,\s*720px\)/s);
+  assert.match(css, /\.viewer-shell\s*\{[^}]*grid-template-columns:\s*210px minmax\(0,\s*520px\)/s);
   assert.match(css, /\.viewer-stage\s*\{[^}]*aspect-ratio:\s*1/s);
   assert.match(css, /\.viewer-chips\s*\{[^}]*flex-direction:\s*column/s);
   assert.match(css, /@media \(max-width:\s*720px\)[\s\S]*\.viewer-chips\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
@@ -395,6 +436,6 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260820-3["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260823-9["']>/,
   );
 });
