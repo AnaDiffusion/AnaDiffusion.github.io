@@ -603,7 +603,10 @@ h1, h2, h3, strong { color: var(--ink); }
 
 @media (max-width: 720px) {
   .paper-figure figcaption { grid-template-columns: 1fr; gap: 10px; padding-top: 19px; }
-  .abstract-motion video { width: 165vw; opacity: .3; transform: translateY(120px); }
+  .abstract-motion video {
+    position: absolute; top: 50%; left: 50%; width: 165vw;
+    opacity: .3; transform: translate(-50%, calc(-50% + 120px));
+  }
   .full-resolution-link { grid-column: auto; margin-top: 5px; }
   .method-steps { grid-template-columns: 1fr; }
   .method-steps article { min-height: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
