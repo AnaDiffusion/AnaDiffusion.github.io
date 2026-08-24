@@ -42,30 +42,31 @@ class AnimationStateTests(unittest.TestCase):
         self.assertEqual(state(4.0)["cb"], 0.0)
         self.assertEqual(state(6.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
         self.assertEqual(state(8.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
-        self.assertEqual(state(12.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
+        self.assertEqual(state(12.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
+        self.assertEqual(state(16.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
 
     def test_camera_returns_to_its_starting_angle(self):
         self.assertEqual(
             self.renderer.camera_angles(0.0),
-            self.renderer.camera_angles(12.0),
+            self.renderer.camera_angles(16.0),
         )
 
     def test_complete_assembly_turns_a_full_360_degrees(self):
         _, starting_azimuth = self.renderer.camera_angles(5.2)
-        _, ending_azimuth = self.renderer.camera_angles(11.2)
+        _, ending_azimuth = self.renderer.camera_angles(15.2)
         self.assertAlmostEqual(ending_azimuth - starting_azimuth, 360.0)
 
     def test_camera_briefly_reveals_inferior_surface_then_returns(self):
         expected_elevations = {
             5.2: 45.0,
-            8.2: -15.0,
-            11.2: 45.0,
+            10.2: -15.0,
+            15.2: 45.0,
         }
         for time_s, expected in expected_elevations.items():
             elevation, _ = self.renderer.camera_angles(time_s)
             self.assertAlmostEqual(elevation, expected)
 
-        for time_s in (6.7, 9.7):
+        for time_s in (7.7, 12.7):
             elevation, _ = self.renderer.camera_angles(time_s)
             self.assertGreater(elevation, 40.0)
 
@@ -150,7 +151,7 @@ class MediaOutputTests(unittest.TestCase):
             self.assertEqual(poster.size, (1280, 720))
 
     @unittest.skipUnless(shutil.which("ffprobe"), "ffprobe is required")
-    def test_videos_are_silent_twelve_second_720p_loops(self):
+    def test_videos_are_silent_sixteen_second_720p_loops(self):
         for filename in ("anadiffusion-assembly.mp4", "anadiffusion-assembly.webm"):
             path = ROOT / "media" / filename
             result = subprocess.run(
@@ -180,7 +181,7 @@ class MediaOutputTests(unittest.TestCase):
             self.assertEqual(video_streams[0]["width"], 1280)
             self.assertEqual(video_streams[0]["height"], 720)
             self.assertEqual(video_streams[0]["r_frame_rate"], "24/1")
-            self.assertAlmostEqual(float(probe["format"]["duration"]), 12.0, places=2)
+            self.assertAlmostEqual(float(probe["format"]["duration"]), 16.0, places=2)
 
 
 if __name__ == "__main__":
