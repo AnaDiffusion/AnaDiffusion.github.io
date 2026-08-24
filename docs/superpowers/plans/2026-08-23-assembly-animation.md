@@ -193,3 +193,38 @@ git commit -m "Add anatomical assembly animation"
 ```
 
 Do not push or embed the media on the webpage.
+
+### Task 5: Increase camera coverage and anatomical translucency
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Regenerate: `media/anadiffusion-assembly.mp4`
+- Regenerate: `media/anadiffusion-assembly.webm`
+- Regenerate: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write failing motion and opacity tests**
+
+Assert that the azimuth values at seconds 2 and 6 span at least 40 degrees, the elevation values span at least 8 degrees, and the configured maximum part opacity is greater than zero but less than one.
+
+- [ ] **Step 2: Run the focused tests and verify RED**
+
+Run:
+
+```bash
+MPLCONFIGDIR=/tmp/anadiffusion-mpl-cache XDG_CACHE_HOME=/tmp/anadiffusion-xdg-cache /opt/anaconda3/bin/python3 -m unittest tests.test_assembly_animation.AnimationStateTests -v
+```
+
+Expected: FAIL because the existing orbit spans only 22 degrees of azimuth and 5 degrees of elevation, and no translucent maximum opacity is configured.
+
+- [ ] **Step 3: Implement the approved visibility settings**
+
+Add `PART_OPACITY = 0.82`. Update `camera_angles()` to use azimuth amplitude `20.0` and elevation amplitude `4.0`, preserving the full-period sinusoid and identical values at seconds 0 and 8. Multiply every per-part stage alpha by `PART_OPACITY` when setting merged face colors in `render_frame()`.
+
+- [ ] **Step 4: Run focused tests and inspect a preview strip**
+
+Run the animation-state and frame-render tests. Render the four-state preview strip and confirm the wider rotation, translucent overlapping surfaces, stable colors, and depth-correct occlusion.
+
+- [ ] **Step 5: Regenerate and verify all media**
+
+Render all 192 frames and replace the MP4, WebM, and poster. Inspect a one-frame-per-second contact sheet from the encoded MP4. Run the complete Python and Node test suites, then commit locally without pushing.

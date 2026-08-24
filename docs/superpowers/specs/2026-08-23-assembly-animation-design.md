@@ -45,6 +45,10 @@ The final animation is 8 seconds at 24 frames per second:
 
 The camera follows a slow sinusoidal three-quarter orbit and returns to its starting angle at 8 seconds, preventing a camera jump at the loop boundary. Anatomy is never translated or rescaled during stage transitions; new parts fade into their corrected final-canvas positions.
 
+### Approved visibility refinement
+
+The camera sweeps through 40 degrees of azimuth and 8 degrees of elevation over the loop, returning exactly to its starting view. Once a part has finished fading in, its surface remains at 82% opacity rather than becoming fully opaque. The added motion exposes more of the anterior and posterior surfaces, while the restrained translucency reveals overlapping anatomical structure without washing out the lavender, green, and butter part identities.
+
 ## Frame composition
 
 - Resolution: `1280 × 720` pixels.
