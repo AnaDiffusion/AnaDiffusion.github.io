@@ -49,6 +49,20 @@ class AnimationStateTests(unittest.TestCase):
             self.renderer.camera_angles(8.0),
         )
 
+    def test_complete_assembly_sweeps_through_the_camera_azimuth(self):
+        _, forward_azimuth = self.renderer.camera_angles(5.2)
+        _, reverse_azimuth = self.renderer.camera_angles(7.2)
+        self.assertGreaterEqual(abs(forward_azimuth - reverse_azimuth), 38.0)
+
+    def test_complete_assembly_sweeps_through_the_camera_elevation(self):
+        forward_elevation, _ = self.renderer.camera_angles(5.2)
+        reverse_elevation, _ = self.renderer.camera_angles(7.2)
+        self.assertGreaterEqual(abs(forward_elevation - reverse_elevation), 7.5)
+
+    def test_anatomical_surfaces_use_the_approved_translucency(self):
+        opacity = getattr(self.renderer, "PART_OPACITY", 1.0)
+        self.assertAlmostEqual(opacity, 0.82)
+
 
 @unittest.skipUnless(RENDERER_PATH.exists(), "animation renderer is missing")
 class AnatomicalMaskTests(unittest.TestCase):

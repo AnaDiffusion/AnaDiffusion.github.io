@@ -47,7 +47,7 @@ The camera follows a slow sinusoidal three-quarter orbit and returns to its star
 
 ### Approved visibility refinement
 
-The camera sweeps through 40 degrees of azimuth and 8 degrees of elevation over the loop, returning exactly to its starting view. Once a part has finished fading in, its surface remains at 82% opacity rather than becoming fully opaque. The added motion exposes more of the anterior and posterior surfaces, while the restrained translucency reveals overlapping anatomical structure without washing out the lavender, green, and butter part identities.
+The camera completes two smooth sinusoidal cycles during the loop and returns exactly to its starting view. This places nearly the full 40-degree azimuth and 8-degree elevation sweep inside the `5.2–7.2 s` complete-assembly hold, so the finished anatomy—not only the intermediate stages—shows multiple useful angles. Once a part has finished fading in, its surface remains at 82% opacity rather than becoming fully opaque. The added motion exposes more of the anterior and posterior surfaces, while the restrained translucency reveals overlapping anatomical structure without washing out the lavender, green, and butter part identities.
 
 ## Frame composition
 

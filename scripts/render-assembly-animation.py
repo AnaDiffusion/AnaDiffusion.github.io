@@ -40,6 +40,7 @@ WIDTH = 1280
 HEIGHT = 720
 FPS = 24
 DURATION = 8.0
+PART_OPACITY = 0.82
 
 BACKGROUND = "#0d091b"
 BACKGROUND_RGB = (13, 9, 27)
@@ -77,9 +78,9 @@ def stage_state(time_s: float) -> dict[str, float]:
 def camera_angles(time_s: float) -> tuple[float, float]:
     """Return a subtle looping elevation and azimuth in degrees."""
     loop_time = float(time_s) % DURATION
-    phase = 2.0 * math.pi * loop_time / DURATION
-    elevation = 18.0 + 2.5 * math.sin(phase)
-    azimuth = -38.0 + 11.0 * math.sin(phase)
+    phase = 4.0 * math.pi * loop_time / DURATION
+    elevation = 18.0 + 4.0 * math.sin(phase)
+    azimuth = -38.0 + 20.0 * math.sin(phase)
     return elevation, azimuth
 
 
@@ -286,7 +287,7 @@ class AssemblyRenderer:
         state = stage_state(time_s)
         facecolors = self.base_facecolors.copy()
         for name, alpha in state.items():
-            facecolors[self.face_part_slices[name], 3] = alpha
+            facecolors[self.face_part_slices[name], 3] = alpha * PART_OPACITY
         self.surface_collection.set_facecolor(facecolors)
 
         elevation, azimuth = camera_angles(time_s)
