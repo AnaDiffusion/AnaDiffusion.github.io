@@ -250,6 +250,7 @@ class MediaOutputTests(unittest.TestCase):
             "anadiffusion-assembly-poster.png",
             "anadiffusion-assembly-transparent.webm",
             "anadiffusion-assembly-transparent-poster.png",
+            "anadiffusion-assembly-transparent-continuous.webm",
         ):
             self.assertTrue((ROOT / "media" / filename).is_file(), filename)
 
@@ -305,6 +306,42 @@ class MediaOutputTests(unittest.TestCase):
     @unittest.skipUnless(shutil.which("ffprobe"), "ffprobe is required")
     def test_transparent_webm_is_silent_alpha_1_25x_720p(self):
         path = ROOT / "media" / "anadiffusion-assembly-transparent.webm"
+        self.assertTrue(path.is_file(), path.name)
+        result = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration:stream=codec_type,width,height,r_frame_rate:stream_tags=alpha_mode",
+                "-of",
+                "json",
+                str(path),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        probe = json.loads(result.stdout)
+        video_streams = [
+            stream for stream in probe["streams"] if stream["codec_type"] == "video"
+        ]
+        audio_streams = [
+            stream for stream in probe["streams"] if stream["codec_type"] == "audio"
+        ]
+        self.assertEqual(len(video_streams), 1)
+        self.assertEqual(audio_streams, [])
+        video = video_streams[0]
+        self.assertEqual(video["width"], 1280)
+        self.assertEqual(video["height"], 720)
+        self.assertEqual(video["r_frame_rate"], "30/1")
+        tags = {key.lower(): value for key, value in video.get("tags", {}).items()}
+        self.assertEqual(tags.get("alpha_mode"), "1")
+        self.assertAlmostEqual(float(probe["format"]["duration"]), 12.8, places=2)
+
+    @unittest.skipUnless(shutil.which("ffprobe"), "ffprobe is required")
+    def test_continuous_webm_is_silent_alpha_1_25x_720p(self):
+        path = ROOT / "media" / "anadiffusion-assembly-transparent-continuous.webm"
         self.assertTrue(path.is_file(), path.name)
         result = subprocess.run(
             [
