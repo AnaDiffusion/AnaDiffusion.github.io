@@ -18,21 +18,39 @@ DISPLAY_MAX = 1.0
 
 PARTS = (
     (
+        "left",
         "lhemi-sample-01.nii.gz",
         np.array([170, 140, 224], dtype=np.float32),
         np.array([-78.0, 0.0, 0.0]),
     ),
     (
+        "right",
         "rhemi-sample-01.nii.gz",
         np.array([150, 199, 132], dtype=np.float32),
         np.array([-13.5, 0.0, 0.0]),
     ),
     (
+        "cb",
         "cb-sample-01.nii.gz",
         np.array([240, 205, 120], dtype=np.float32),
         np.array([0.0, -9.5, 16.0]),
     ),
 )
+
+
+def select_parts(part_names: tuple[str, ...] | None = None) -> tuple:
+    if part_names is None:
+        return PARTS
+    if not part_names:
+        raise ValueError("select at least one part")
+
+    known_parts = {part_id for part_id, *_ in PARTS}
+    unknown = set(part_names) - known_parts
+    if unknown:
+        raise ValueError(f"unknown part: {', '.join(sorted(unknown))}")
+
+    selected = set(part_names)
+    return tuple(part for part in PARTS if part[0] in selected)
 
 
 def load_on_grid(
@@ -59,6 +77,7 @@ def build_assembly(
     display_min: float = DISPLAY_MIN,
     display_max: float = DISPLAY_MAX,
     mask_threshold: float = 0.0,
+    part_names: tuple[str, ...] | None = None,
 ) -> nib.Nifti1Image:
     if display_max <= display_min:
         raise ValueError("display_max must be greater than display_min")
@@ -66,9 +85,10 @@ def build_assembly(
     # Use the reference image only as the shared world-coordinate grid. Its
     # voxel values are never read or included in the colored assembly.
     reference_image = nib.load(reference_path)
+    parts = select_parts(part_names)
     part_values = [
         load_on_grid(VOLUME_DIR / name, reference_image, world_offset)
-        for name, _, world_offset in PARTS
+        for _, name, _, world_offset in parts
     ]
     part_masks = np.stack([values > mask_threshold for values in part_values])
 
@@ -82,7 +102,7 @@ def build_assembly(
 
     rgb_dtype = np.dtype([("R", "u1"), ("G", "u1"), ("B", "u1")])
     rgb = np.zeros(reference_image.shape, dtype=rgb_dtype)
-    for index, (_, color, _) in enumerate(PARTS):
+    for index, (_, _, color, _) in enumerate(parts):
         region = target_mask & (labels == index)
         normalized = np.clip(
             (intensity[region] - display_min) / (display_max - display_min),
@@ -108,18 +128,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--display-min", type=float, default=DISPLAY_MIN)
     parser.add_argument("--display-max", type=float, default=DISPLAY_MAX)
     parser.add_argument("--mask-threshold", type=float, default=0.0)
+    parser.add_argument("--parts", default="left,right,cb")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     output_path = VOLUME_DIR / args.output
+    part_names = tuple(name.strip() for name in args.parts.split(",") if name.strip())
     nib.save(
         build_assembly(
             reference_path=VOLUME_DIR / args.reference,
             display_min=args.display_min,
             display_max=args.display_max,
             mask_threshold=args.mask_threshold,
+            part_names=part_names,
         ),
         output_path,
     )
