@@ -39,8 +39,8 @@ MEDIA_DIR = ROOT / "media"
 WIDTH = 1280
 HEIGHT = 720
 FPS = 24
-DURATION = 8.0
-PART_OPACITY = 0.82
+DURATION = 12.0
+PART_OPACITY = 0.70
 
 BACKGROUND = "#0d091b"
 BACKGROUND_RGB = (13, 9, 27)
@@ -66,8 +66,8 @@ def stage_state(time_s: float) -> dict[str, float]:
     right = _smoothstep(2.4, 3.0, time_s)
     cb = _smoothstep(4.6, 5.2, time_s)
 
-    if time_s >= 7.2:
-        fade_out = 1.0 - _smoothstep(7.2, 8.0, time_s)
+    if time_s >= 11.2:
+        fade_out = 1.0 - _smoothstep(11.2, 12.0, time_s)
         left *= fade_out
         right *= fade_out
         cb *= fade_out
@@ -76,11 +76,11 @@ def stage_state(time_s: float) -> dict[str, float]:
 
 
 def camera_angles(time_s: float) -> tuple[float, float]:
-    """Return a subtle looping elevation and azimuth in degrees."""
+    """Return a full assembled-anatomy turn that loops without a visual jump."""
     loop_time = float(time_s) % DURATION
-    phase = 4.0 * math.pi * loop_time / DURATION
-    elevation = 18.0 + 4.0 * math.sin(phase)
-    azimuth = -38.0 + 20.0 * math.sin(phase)
+    turn_progress = _smoothstep(5.2, 11.2, loop_time)
+    elevation = 18.0 + 5.0 * math.sin(2.0 * math.pi * turn_progress)
+    azimuth = -38.0 + 360.0 * turn_progress
     return elevation, azimuth
 
 
@@ -294,7 +294,7 @@ class AssemblyRenderer:
         self.axes.view_init(elev=elevation, azim=azimuth, roll=0.0)
         self.stage_text.set_text(_stage_label(time_s))
 
-        title_alpha = 1.0 - _smoothstep(7.4, 8.0, time_s)
+        title_alpha = 1.0 - _smoothstep(11.4, 12.0, time_s)
         self.eyebrow.set_alpha(title_alpha)
         self.heading.set_alpha(title_alpha)
         self.stage_text.set_alpha(title_alpha)

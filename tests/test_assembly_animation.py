@@ -41,27 +41,28 @@ class AnimationStateTests(unittest.TestCase):
         self.assertEqual(state(4.0)["right"], 1.0)
         self.assertEqual(state(4.0)["cb"], 0.0)
         self.assertEqual(state(6.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
-        self.assertEqual(state(8.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
+        self.assertEqual(state(8.0), {"left": 1.0, "right": 1.0, "cb": 1.0})
+        self.assertEqual(state(12.0), {"left": 0.0, "right": 0.0, "cb": 0.0})
 
     def test_camera_returns_to_its_starting_angle(self):
         self.assertEqual(
             self.renderer.camera_angles(0.0),
-            self.renderer.camera_angles(8.0),
+            self.renderer.camera_angles(12.0),
         )
 
-    def test_complete_assembly_sweeps_through_the_camera_azimuth(self):
-        _, forward_azimuth = self.renderer.camera_angles(5.2)
-        _, reverse_azimuth = self.renderer.camera_angles(7.2)
-        self.assertGreaterEqual(abs(forward_azimuth - reverse_azimuth), 38.0)
+    def test_complete_assembly_turns_a_full_360_degrees(self):
+        _, starting_azimuth = self.renderer.camera_angles(5.2)
+        _, ending_azimuth = self.renderer.camera_angles(11.2)
+        self.assertAlmostEqual(ending_azimuth - starting_azimuth, 360.0)
 
-    def test_complete_assembly_sweeps_through_the_camera_elevation(self):
-        forward_elevation, _ = self.renderer.camera_angles(5.2)
-        reverse_elevation, _ = self.renderer.camera_angles(7.2)
-        self.assertGreaterEqual(abs(forward_elevation - reverse_elevation), 7.5)
+    def test_complete_assembly_changes_elevation_during_the_turn(self):
+        high_elevation, _ = self.renderer.camera_angles(7.0)
+        low_elevation, _ = self.renderer.camera_angles(10.0)
+        self.assertGreaterEqual(abs(high_elevation - low_elevation), 7.0)
 
     def test_anatomical_surfaces_use_the_approved_translucency(self):
         opacity = getattr(self.renderer, "PART_OPACITY", 1.0)
-        self.assertAlmostEqual(opacity, 0.82)
+        self.assertAlmostEqual(opacity, 0.70)
 
 
 @unittest.skipUnless(RENDERER_PATH.exists(), "animation renderer is missing")
@@ -140,7 +141,7 @@ class MediaOutputTests(unittest.TestCase):
             self.assertEqual(poster.size, (1280, 720))
 
     @unittest.skipUnless(shutil.which("ffprobe"), "ffprobe is required")
-    def test_videos_are_silent_eight_second_720p_loops(self):
+    def test_videos_are_silent_twelve_second_720p_loops(self):
         for filename in ("anadiffusion-assembly.mp4", "anadiffusion-assembly.webm"):
             path = ROOT / "media" / filename
             result = subprocess.run(
@@ -170,7 +171,7 @@ class MediaOutputTests(unittest.TestCase):
             self.assertEqual(video_streams[0]["width"], 1280)
             self.assertEqual(video_streams[0]["height"], 720)
             self.assertEqual(video_streams[0]["r_frame_rate"], "24/1")
-            self.assertAlmostEqual(float(probe["format"]["duration"]), 8.0, places=2)
+            self.assertAlmostEqual(float(probe["format"]["duration"]), 12.0, places=2)
 
 
 if __name__ == "__main__":
