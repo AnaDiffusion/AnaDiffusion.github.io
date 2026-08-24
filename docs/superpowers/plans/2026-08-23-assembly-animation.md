@@ -439,3 +439,56 @@ Keep the existing azimuth, inferior-view elevation curve, 50% opacity, stage lab
 - [ ] **Step 4: Verify, regenerate, inspect, and commit**
 
 Run the focused tests, render all 384 frames, and replace both videos and the poster. Inspect an encoded two-second contact sheet for calmer full-turn motion, the midpoint inferior view, seamless return, 50% opacity, and correct depth sorting. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.
+
+### Task 10: Deliver the approved animation at 1.25x playback
+
+**Files:**
+- Modify: `tests/test_assembly_animation.py`
+- Modify: `scripts/render-assembly-animation.py`
+- Regenerate: `media/anadiffusion-assembly.mp4`
+- Regenerate: `media/anadiffusion-assembly.webm`
+- Verify unchanged: `media/anadiffusion-assembly-poster.png`
+
+- [ ] **Step 1: Write failing playback-rate tests**
+
+Add a renderer configuration test that requires an exact 1.25x playback rate and 30 fps output:
+
+```python
+def test_output_uses_the_approved_playback_rate(self):
+    self.assertAlmostEqual(getattr(self.renderer, "PLAYBACK_RATE", 1.0), 1.25)
+    self.assertEqual(getattr(self.renderer, "OUTPUT_FPS", self.renderer.FPS), 30)
+```
+
+Rename the media test to `test_videos_are_silent_1_25x_720p_loops`, change the expected frame rate from `24/1` to `30/1`, and change the expected duration from `16.0` to `12.8` seconds.
+
+- [ ] **Step 2: Run the focused tests and verify RED**
+
+Run:
+
+```bash
+MPLCONFIGDIR=/tmp/anadiffusion-mpl-cache XDG_CACHE_HOME=/tmp/anadiffusion-xdg-cache /opt/anaconda3/bin/python3 -m unittest tests.test_assembly_animation.AnimationStateTests tests.test_assembly_animation.MediaOutputTests -v
+```
+
+Expected: FAIL because the renderer has no playback-rate configuration and both current videos probe as 16 seconds at 24 fps.
+
+- [ ] **Step 3: Implement exact frame-preserving 1.25x encoding**
+
+Keep `FPS = 24` as the source-frame sampling rate and add:
+
+```python
+PLAYBACK_RATE = 1.25
+OUTPUT_FPS = int(FPS * PLAYBACK_RATE)
+```
+
+Change only FFmpeg's frame-sequence input rate:
+
+```python
+"-framerate",
+str(OUTPUT_FPS),
+```
+
+Do not change `DURATION`, source frame count, stage/camera functions, opacity, labels, or poster rendering.
+
+- [ ] **Step 4: Verify, regenerate, inspect, and commit**
+
+Run the focused configuration tests, regenerate the same 384 source frames, and replace both videos. Compare the poster hash to its pre-render value. Inspect a two-second contact sheet from the encoded MP4 for the unchanged frame sequence and complete orbit. Run all Python and Node tests plus the unchanged webpage/NIfTI audit. Commit locally without pushing.

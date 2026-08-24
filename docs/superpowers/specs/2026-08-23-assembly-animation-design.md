@@ -33,7 +33,7 @@ Browser-canvas capture from NiiVue was rejected because it would match the live 
 
 ## Timeline and motion
 
-The final animation is 16 seconds at 24 frames per second:
+The animation is authored as 384 source frames on a 16-second, 24 fps motion timeline, then delivered at an exact 1.25x playback rate by encoding those same frames at 30 fps. The visible output is therefore 12.8 seconds without frame interpolation, frame dropping, or any change to the approved camera path:
 
 - `0.0–0.5 s`: left hemisphere fades in from black.
 - `0.5–2.4 s`: left hemisphere holds; label reads **1 · Left hemisphere**.
@@ -49,7 +49,7 @@ The camera holds a 45-degree elevation while the anatomy assembles. During the c
 
 The complete assembly rotates through all 360 degrees during the `5.2–15.2 s` hold, providing anterior, posterior, and both lateral views at a calmer, readable pace. Once a part has finished fading in, its surface remains at 50% opacity rather than becoming fully opaque. The stronger translucency reveals deeper overlapping anatomical structure while preserving the lavender, green, and butter part identities.
 
-For turn progress `p` from zero to one, elevation is `45 - 60 sin^4(pi p)` degrees. This yields 45 degrees at the start and end, 30 degrees at each quarter-turn, and -15 degrees at the midpoint. Extending the turn from 6 to 10 seconds reduces its average azimuth speed from 60 to 36 degrees per second without changing the easing curve. Opacity, framing, assembly timing, labels, and encoders remain unchanged.
+For turn progress `p` from zero to one, elevation is `45 - 60 sin^4(pi p)` degrees. This yields 45 degrees at the start and end, 30 degrees at each quarter-turn, and -15 degrees at the midpoint. The 10-second authored turn plays in 8 seconds at the approved 1.25x output rate. Opacity, framing, relative assembly timing, labels, and frame content remain unchanged.
 
 ## Frame composition
 
@@ -70,9 +70,11 @@ For turn progress `p` from zero to one, elevation is `45 - 60 sin^4(pi p)` degre
 
 Temporary PNG frames are written outside the repository and deleted after encoding.
 
+Both video deliverables use the same 384 rendered frames at 30 fps, producing an exact 12.8-second playback duration. The poster is a still image and is unaffected by playback rate.
+
 ## Verification
 
-Automated tests will cover the stage-opacity schedule, full 360-degree turn, part-mask separation, shared final-canvas geometry, and deterministic frame dimensions. Final validation will use `ffprobe` to confirm both videos are `1280 × 720`, 16 seconds, and silent. The poster must be `1280 × 720`, and the existing webpage sources and NIfTI files must remain unchanged.
+Automated tests will cover the stage-opacity schedule, full 360-degree turn, 1.25x playback configuration, part-mask separation, shared final-canvas geometry, and deterministic frame dimensions. Final validation will use `ffprobe` to confirm both videos are `1280 × 720`, 30 fps, 12.8 seconds, and silent. The poster must be `1280 × 720`, and the existing webpage sources and NIfTI files must remain unchanged.
 
 ## Non-goals
 
