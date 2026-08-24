@@ -169,15 +169,20 @@ class AssemblyRenderer:
         width: int = WIDTH,
         height: int = HEIGHT,
         mesh_step: int = 2,
+        transparent: bool = False,
+        show_text: bool = True,
     ) -> None:
         self.width = int(width)
         self.height = int(height)
         self.dpi = 100
+        self.transparent = bool(transparent)
+        self.show_text = bool(show_text)
+        canvas_color = (0.0, 0.0, 0.0, 0.0) if self.transparent else BACKGROUND
 
         self.figure = Figure(
             figsize=(self.width / self.dpi, self.height / self.dpi),
             dpi=self.dpi,
-            facecolor=BACKGROUND,
+            facecolor=canvas_color,
         )
         self.canvas = FigureCanvasAgg(self.figure)
         self.axes = self.figure.add_axes(
@@ -185,7 +190,7 @@ class AssemblyRenderer:
             projection="3d",
             computed_zorder=True,
         )
-        self.axes.set_facecolor(BACKGROUND)
+        self.axes.set_facecolor(canvas_color)
         self.axes.set_axis_off()
         self.axes.set_proj_type("ortho")
 
@@ -284,6 +289,9 @@ class AssemblyRenderer:
             ha="center",
             va="center",
         )
+        self.eyebrow.set_visible(self.show_text)
+        self.heading.set_visible(self.show_text)
+        self.stage_text.set_visible(self.show_text)
 
     def render_frame(self, time_s: float) -> Image.Image:
         state = stage_state(time_s)
@@ -294,15 +302,18 @@ class AssemblyRenderer:
 
         elevation, azimuth = camera_angles(time_s)
         self.axes.view_init(elev=elevation, azim=azimuth, roll=0.0)
-        self.stage_text.set_text(_stage_label(time_s))
+        if self.show_text:
+            self.stage_text.set_text(_stage_label(time_s))
 
-        title_alpha = 1.0 - _smoothstep(15.4, 16.0, time_s)
-        self.eyebrow.set_alpha(title_alpha)
-        self.heading.set_alpha(title_alpha)
-        self.stage_text.set_alpha(title_alpha)
+            title_alpha = 1.0 - _smoothstep(15.4, 16.0, time_s)
+            self.eyebrow.set_alpha(title_alpha)
+            self.heading.set_alpha(title_alpha)
+            self.stage_text.set_alpha(title_alpha)
 
         self.canvas.draw()
         rgba = np.asarray(self.canvas.buffer_rgba()).copy()
+        if self.transparent:
+            return Image.fromarray(rgba, mode="RGBA")
         return Image.fromarray(rgba[..., :3], mode="RGB")
 
     def close(self) -> None:
@@ -339,6 +350,42 @@ def _encode_video(
         command += ["-crf", "30", "-b:v", "0", "-pix_fmt", "yuv420p"]
     command.append(str(output_path))
     subprocess.run(command, check=True)
+
+
+def _encode_transparent_webm(frame_pattern: Path, output_path: Path) -> None:
+    """Encode RGBA PNG frames as a browser-compatible VP9 alpha video."""
+    ffmpeg = shutil.which("ffmpeg")
+    if ffmpeg is None:
+        raise RuntimeError("ffmpeg is required to encode the animation")
+
+    subprocess.run(
+        [
+            ffmpeg,
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-y",
+            "-framerate",
+            str(OUTPUT_FPS),
+            "-i",
+            str(frame_pattern),
+            "-an",
+            "-c:v",
+            "libvpx-vp9",
+            "-crf",
+            "30",
+            "-b:v",
+            "0",
+            "-pix_fmt",
+            "yuva420p",
+            "-auto-alt-ref",
+            "0",
+            "-metadata:s:v:0",
+            "alpha_mode=1",
+            str(output_path),
+        ],
+        check=True,
+    )
 
 
 def render_animation(
@@ -384,6 +431,58 @@ def render_animation(
     return mp4_path, webm_path, poster_path
 
 
+def render_transparent_animation(
+    output_dir: Path = MEDIA_DIR,
+    *,
+    width: int = WIDTH,
+    height: int = HEIGHT,
+    mesh_step: int = 2,
+) -> tuple[Path, Path]:
+    """Render the same animation on alpha with every label removed."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    masks, affine = load_part_masks()
+    renderer = AssemblyRenderer(
+        masks,
+        affine,
+        width=width,
+        height=height,
+        mesh_step=mesh_step,
+        transparent=True,
+        show_text=False,
+    )
+
+    webm_path = output_dir / "anadiffusion-assembly-transparent.webm"
+    poster_path = output_dir / "anadiffusion-assembly-transparent-poster.png"
+
+    try:
+        with tempfile.TemporaryDirectory(
+            prefix="anadiffusion-assembly-transparent-"
+        ) as temp_dir:
+            frame_dir = Path(temp_dir)
+            frame_count = int(DURATION * FPS)
+            for index in range(frame_count):
+                time_s = index / FPS
+                frame = renderer.render_frame(time_s)
+                frame.save(frame_dir / f"frame-{index:04d}.png", compress_level=1)
+                if index % FPS == 0:
+                    print(f"Rendered {index:03d}/{frame_count} frames", flush=True)
+
+            _encode_transparent_webm(
+                frame_dir / "frame-%04d.png",
+                webm_path,
+            )
+    finally:
+        renderer.close()
+
+    render_transparent_poster(
+        poster_path,
+        width=width,
+        height=height,
+        mesh_step=1,
+    )
+    return webm_path, poster_path
+
+
 def render_poster(
     output_path: Path,
     *,
@@ -399,6 +498,33 @@ def render_poster(
         width=width,
         height=height,
         mesh_step=mesh_step,
+    )
+    try:
+        frame = renderer.render_frame(6.2)
+    finally:
+        renderer.close()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    frame.save(output_path, optimize=True)
+    return output_path
+
+
+def render_transparent_poster(
+    output_path: Path,
+    *,
+    width: int = WIDTH,
+    height: int = HEIGHT,
+    mesh_step: int = 1,
+) -> Path:
+    """Render the assembled state on alpha without any labels."""
+    masks, affine = load_part_masks()
+    renderer = AssemblyRenderer(
+        masks,
+        affine,
+        width=width,
+        height=height,
+        mesh_step=mesh_step,
+        transparent=True,
+        show_text=False,
     )
     try:
         frame = renderer.render_frame(6.2)
@@ -438,6 +564,14 @@ def render_preview_strip(
     return output_path
 
 
+def _display_path(path: Path) -> str:
+    """Prefer a repository-relative CLI path without rejecting external outputs."""
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -464,6 +598,11 @@ def main() -> None:
         action="store_true",
         help="Render only the high-detail poster PNG",
     )
+    parser.add_argument(
+        "--transparent-variant",
+        action="store_true",
+        help="Render a transparent VP9 WebM and text-free RGBA poster",
+    )
     args = parser.parse_args()
     if args.preview_strip:
         path = render_preview_strip(
@@ -481,7 +620,17 @@ def main() -> None:
             height=args.height,
             mesh_step=1,
         )
-        print(path.relative_to(ROOT))
+        print(_display_path(path))
+        return
+    if args.transparent_variant:
+        paths = render_transparent_animation(
+            args.output_dir,
+            width=args.width,
+            height=args.height,
+            mesh_step=args.mesh_step,
+        )
+        for path in paths:
+            print(_display_path(path))
         return
     paths = render_animation(
         args.output_dir,
@@ -490,7 +639,7 @@ def main() -> None:
         mesh_step=args.mesh_step,
     )
     for path in paths:
-        print(path.relative_to(ROOT))
+        print(_display_path(path))
 
 
 if __name__ == "__main__":
