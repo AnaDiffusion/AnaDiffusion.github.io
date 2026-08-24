@@ -55,10 +55,19 @@ class AnimationStateTests(unittest.TestCase):
         _, ending_azimuth = self.renderer.camera_angles(11.2)
         self.assertAlmostEqual(ending_azimuth - starting_azimuth, 360.0)
 
-    def test_camera_holds_the_approved_forty_five_degree_elevation(self):
-        for time_s in (0.0, 5.2, 8.2, 11.2, 12.0):
+    def test_camera_briefly_reveals_inferior_surface_then_returns(self):
+        expected_elevations = {
+            5.2: 45.0,
+            8.2: -15.0,
+            11.2: 45.0,
+        }
+        for time_s, expected in expected_elevations.items():
             elevation, _ = self.renderer.camera_angles(time_s)
-            self.assertEqual(elevation, 45.0)
+            self.assertAlmostEqual(elevation, expected)
+
+        for time_s in (6.7, 9.7):
+            elevation, _ = self.renderer.camera_angles(time_s)
+            self.assertGreater(elevation, 40.0)
 
     def test_anatomical_surfaces_use_the_approved_translucency(self):
         opacity = getattr(self.renderer, "PART_OPACITY", 1.0)

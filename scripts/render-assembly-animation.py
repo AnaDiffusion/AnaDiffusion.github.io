@@ -79,7 +79,7 @@ def camera_angles(time_s: float) -> tuple[float, float]:
     """Return a full assembled-anatomy turn that loops without a visual jump."""
     loop_time = float(time_s) % DURATION
     turn_progress = _smoothstep(5.2, 11.2, loop_time)
-    elevation = 45.0
+    elevation = 45.0 - 60.0 * math.sin(math.pi * turn_progress) ** 4
     azimuth = -38.0 + 360.0 * turn_progress
     return elevation, azimuth
 

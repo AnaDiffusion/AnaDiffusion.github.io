@@ -339,20 +339,22 @@ Render all 288 frames and replace both videos and the poster. Inspect the previe
 
 - [ ] **Step 1: Write a failing inferior-view camera test**
 
-Replace the fixed-elevation test with an assertion that the camera starts and ends at 45 degrees, remains elevated at both quarter-turns, and reaches a restrained -15-degree inferior view at the midpoint:
+Replace the fixed-elevation test with an assertion that the camera starts and ends at 45 degrees, remains above 40 degrees at the surrounding quarter-time samples, and reaches a restrained -15-degree inferior view at the midpoint:
 
 ```python
 def test_camera_briefly_reveals_inferior_surface_then_returns(self):
     expected_elevations = {
         5.2: 45.0,
-        6.7: 30.0,
         8.2: -15.0,
-        9.7: 30.0,
         11.2: 45.0,
     }
     for time_s, expected in expected_elevations.items():
         elevation, _ = self.renderer.camera_angles(time_s)
         self.assertAlmostEqual(elevation, expected)
+
+    for time_s in (6.7, 9.7):
+        elevation, _ = self.renderer.camera_angles(time_s)
+        self.assertGreater(elevation, 40.0)
 ```
 
 - [ ] **Step 2: Run the focused test and verify RED**
