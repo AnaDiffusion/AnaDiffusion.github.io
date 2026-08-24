@@ -52,7 +52,7 @@ test('uses the exact standalone paper build as the downloadable paper', () => {
   const paper = readFileSync(resolve(pageRoot, 'paper.pdf'));
   const digest = createHash('sha256').update(paper).digest('hex');
 
-  assert.equal(digest, '25963062adaa7a2de4bee45ef932a94a31cb95dc0051160c6e5ec07d0d5f901f');
+  assert.equal(digest, 'eb5466eafede15b13586e362d3dee7271d438d76fab5a9f1b970ae8bd672aa78');
 });
 
 test('uses the corrected paper identity and primary claims', () => {
