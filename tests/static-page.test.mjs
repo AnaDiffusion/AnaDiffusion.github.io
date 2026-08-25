@@ -48,11 +48,17 @@ test('contains every required research section', () => {
   }
 });
 
-test('uses the exact standalone paper build as the downloadable paper', () => {
-  const paper = readFileSync(resolve(pageRoot, 'paper.pdf'));
-  const digest = createHash('sha256').update(paper).digest('hex');
+test('routes every paper action to the canonical arXiv PDF without bundling a local paper', () => {
+  const html = readPage();
+  const paperLinks = [...html.matchAll(/<a\b[^>]*href="https:\/\/arxiv\.org\/pdf\/2608\.23014"[^>]*>/g)];
 
-  assert.equal(digest, 'eb5466eafede15b13586e362d3dee7271d438d76fab5a9f1b970ae8bd672aa78');
+  assert.equal(paperLinks.length, 4);
+  for (const [link] of paperLinks) {
+    assert.match(link, /target="_blank"/);
+    assert.match(link, /rel="noopener"/);
+  }
+  assert.doesNotMatch(html, /paper\.pdf/);
+  assert.equal(existsSync(resolve(pageRoot, 'paper.pdf')), false);
 });
 
 test('uses the corrected paper identity and primary claims', () => {
@@ -147,10 +153,11 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
 test('links the supplied paper and repository without invented destinations', () => {
   const html = readPage();
 
-  assert.match(html, /href=["']paper\.pdf["']/);
+  assert.match(html, /https:\/\/arxiv\.org\/pdf\/2608\.23014/);
+  assert.doesNotMatch(html, /href=["']paper\.pdf["']/);
   assert.match(html, /https:\/\/github\.com\/phai-lab\/AnaDiffusion\.git/);
   assert.match(html, /https:\/\/anadiffusion\.github\.io\//);
-  assert.doesNotMatch(html, /arxiv\.org|youtube\.com|VIDEO_ID/);
+  assert.doesNotMatch(html, /youtube\.com|VIDEO_ID/);
   assert.doesNotMatch(html, /href=["']#["']/);
 });
 
