@@ -82,6 +82,13 @@ test('uses the corrected paper identity and primary claims', () => {
   assert.doesNotMatch(html, /May 17, 2026|34\.33|0\.24/);
 });
 
+test('assigns affiliation 6 to Yale University', () => {
+  const html = readPage();
+
+  assert.match(html, /<sup>6<\/sup>Yale University/);
+  assert.doesNotMatch(html, /UTHealth Houston/i);
+});
+
 test('presents the abstract contributions as four bullets', () => {
   const html = readPage();
   const css = readFileSync(cssPath, 'utf8');
