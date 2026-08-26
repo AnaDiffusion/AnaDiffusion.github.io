@@ -290,11 +290,13 @@ h1, h2, h3, strong { color: var(--ink); }
 }
 .abstract-motion {
   position: absolute; inset: 0; z-index: 0; display: grid; place-items: center;
-  overflow: hidden; pointer-events: none;
+  overflow: hidden; background: transparent; pointer-events: none;
 }
 .abstract-motion video {
   display: block; width: min(1100px, 78vw); max-width: none; height: auto;
-  opacity: .3; transform: translateY(120px); filter: saturate(.9);
+  background: transparent; opacity: .3; transform: translateY(120px);
+  /* Safari decodes VP9 alpha as a white matte; white is neutral under multiply. */
+  mix-blend-mode: multiply;
 }
 .abstract-section .section-kicker,
 .abstract-section h2 { text-align: left; }

@@ -157,6 +157,14 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
   assert.match(siteModule, /initAbstractMotion\(document\)/);
 });
 
+test('composites the Abstract animation without a visible video matte', () => {
+  const css = readFileSync(cssPath, 'utf8');
+
+  assert.match(css, /\.abstract-motion\s*\{[^}]*background:\s*transparent/s);
+  assert.match(css, /\.abstract-motion video\s*\{[^}]*background:\s*transparent[^}]*mix-blend-mode:\s*multiply/s);
+  assert.doesNotMatch(css, /\.abstract-motion video\s*\{[^}]*filter:/s);
+});
+
 test('links the supplied paper and repository without invented destinations', () => {
   const html = readPage();
 
@@ -527,6 +535,6 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260824-6["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260825-1["']>/,
   );
 });
