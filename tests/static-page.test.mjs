@@ -13,6 +13,7 @@ const cssPath = resolve(pageRoot, 'assets/css/main.css');
 const siteModulePath = resolve(pageRoot, 'assets/js/site.mjs');
 const volumeViewerPath = resolve(pageRoot, 'assets/js/volume-viewer.mjs');
 const continuousAssemblyPath = resolve(pageRoot, 'media/anadiffusion-assembly-transparent-continuous.webm');
+const safariAssemblyPath = resolve(pageRoot, 'media/anadiffusion-assembly-transparent-continuous.webp');
 const assemblyVolumePath = resolve(pageRoot, 'volumes/assembly-parts-sample-01.nii.gz');
 const assemblyBuilderPath = resolve(pageRoot, 'scripts/build-colored-assembly.py');
 const faviconSvgPath = resolve(pageRoot, 'images/favicon.svg');
@@ -157,12 +158,26 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
   assert.match(siteModule, /initAbstractMotion\(document\)/);
 });
 
-test('composites the Abstract animation without a visible video matte', () => {
+test('uses a truly transparent animated WebP fallback on WebKit browsers', () => {
+  const html = readPage();
   const css = readFileSync(cssPath, 'utf8');
+  const siteModule = readFileSync(siteModulePath, 'utf8');
+  const fallback = existsSync(safariAssemblyPath) ? readFileSync(safariAssemblyPath) : Buffer.alloc(0);
 
+  assert.equal(existsSync(safariAssemblyPath), true, 'Missing Safari-safe transparent animation fallback');
+  assert.equal(fallback.subarray(0, 4).toString('ascii'), 'RIFF');
+  assert.equal(fallback.subarray(8, 12).toString('ascii'), 'WEBP');
+  assert.equal(fallback[20] & 0x12, 0x12, 'Expected animation and alpha flags');
+  assert.match(fallback.toString('latin1'), /ANIM/);
+
+  assert.match(html, /<img\s+data-abstract-motion-fallback\s+data-src="media\/anadiffusion-assembly-transparent-continuous\.webp\?v=20260825-1"\s+alt=""\s+hidden>/);
   assert.match(css, /\.abstract-motion\s*\{[^}]*background:\s*transparent/s);
-  assert.match(css, /\.abstract-motion video\s*\{[^}]*background:\s*transparent[^}]*mix-blend-mode:\s*multiply/s);
-  assert.doesNotMatch(css, /\.abstract-motion video\s*\{[^}]*filter:/s);
+  assert.match(css, /\.abstract-motion video,\s*\.abstract-motion img\s*\{[^}]*background:\s*transparent/s);
+  assert.doesNotMatch(css, /mix-blend-mode:\s*multiply/);
+  assert.match(siteModule, /AppleWebKit/);
+  assert.match(siteModule, /fallback\.src\s*=\s*fallback\.dataset\.src/);
+  assert.match(siteModule, /video\.hidden\s*=\s*true/);
+  assert.match(siteModule, /fallback\.hidden\s*=\s*false/);
 });
 
 test('links the supplied paper and repository without invented destinations', () => {
@@ -413,7 +428,7 @@ test('loads complete progressive-enhancement modules', () => {
   const siteModule = readFileSync(siteModulePath, 'utf8');
   assert.match(siteModule, /initSampleGallery/);
   assert.doesNotMatch(siteModule, /initAnatomyExplorer|initFigureDialogs|showModal|data-figure-open/);
-  assert.match(html, /<script\s+type=["']module["']\s+src=["']assets\/js\/site\.mjs\?v=20260824-1["']/);
+  assert.match(html, /<script\s+type=["']module["']\s+src=["']assets\/js\/site\.mjs\?v=20260825-1["']/);
 });
 
 test('contains the corrected paper citation without the obsolete figure-one note', () => {
@@ -535,6 +550,15 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260825-1["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260825-2["']>/,
+  );
+});
+
+test('cache-busts the site module so the WebKit fallback reaches the browser', () => {
+  const html = readPage();
+
+  assert.match(
+    html,
+    /<script\s+type=["']module["']\s+src=["']assets\/js\/site\.mjs\?v=20260825-1["']><\/script>/,
   );
 });

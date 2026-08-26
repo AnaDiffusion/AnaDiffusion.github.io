@@ -65,6 +65,17 @@ function initAbstractMotion(root) {
   if (!video) return;
   if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
+  const fallback = root.querySelector('[data-abstract-motion-fallback]');
+  const usesWebKitMedia = /AppleWebKit/i.test(navigator.userAgent)
+    && !/(Chrome|Chromium|Edg|OPR)/i.test(navigator.userAgent);
+  if (fallback && usesWebKitMedia) {
+    fallback.src = fallback.dataset.src;
+    video.pause();
+    video.hidden = true;
+    fallback.hidden = false;
+    return;
+  }
+
   const section = video.closest('.abstract-section');
   const play = () => {
     const playback = video.play();
