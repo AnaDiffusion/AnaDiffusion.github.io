@@ -143,10 +143,15 @@ test('uses the continuous assembly as a quiet accessible Abstract background', (
   assert.match(css, /\.abstract-section \.section-kicker,\s*\.abstract-section h2\s*\{[^}]*text-align:\s*left/s);
   assert.match(css, /\.abstract-section \.section-kicker::after\s*\{[^}]*width:\s*48px[^}]*height:\s*3px[^}]*margin:\s*14px 0 0[^}]*background:\s*var\(--grad\)/s);
   assert.match(css, /\.abstract-section h2\s*\{[^}]*max-width:\s*760px[^}]*margin-inline:\s*0/s);
-  assert.match(css, /\.abstract-motion video\s*\{[^}]*opacity:\s*\.3[^}]*transform:\s*translateY\(120px\)/s);
   assert.match(
     css,
-    /@media \(max-width:\s*720px\)[\s\S]*\.abstract-motion video\s*\{[^}]*position:\s*absolute[^}]*top:\s*50%[^}]*left:\s*50%[^}]*width:\s*165vw[^}]*opacity:\s*\.3[^}]*transform:\s*translate\(-50%,\s*calc\(-50% \+ 120px\)\)/,
+    /\.abstract-motion video,\s*\.abstract-motion img\s*\{[^}]*position:\s*absolute[^}]*top:\s*50%[^}]*left:\s*50%[^}]*transform:\s*translate\(-50%,\s*calc\(-50% \+ 120px\)\)/s,
+  );
+  assert.match(css, /\.abstract-motion video\s*\{[^}]*width:\s*min\(1100px,\s*78vw\)[^}]*opacity:\s*\.3/s);
+  assert.match(css, /\.abstract-motion img\s*\{[^}]*width:\s*min\(540px,\s*39vw\)[^}]*opacity:\s*\.3/s);
+  assert.match(
+    css,
+    /@media \(max-width:\s*720px\)[\s\S]*\.abstract-motion video\s*\{[^}]*width:\s*165vw[^}]*opacity:\s*\.3[^}]*\}/,
   );
   assert.match(css, /\.abstract-section > \.reading-shell\s*\{[^}]*z-index:\s*1/s);
 
@@ -550,7 +555,7 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260825-2["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260825-3["']>/,
   );
 });
 
