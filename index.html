@@ -20,7 +20,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&display=swap">
-    <link rel="stylesheet" href="assets/css/main.css?v=20261008-8">
+    <link rel="stylesheet" href="assets/css/main.css?v=20261010-3">
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to the paper</a>
@@ -65,8 +65,26 @@
           <div class="conference-acceptance">
             <p class="acceptance-label">Accepted at</p>
             <a class="conference-logo" href="https://neurips.cc/Conferences/2026" target="_blank" rel="noopener" aria-label="NeurIPS 2026 conference">
-              <svg class="conference-mark" viewBox="0 4 26 27" width="54" height="56" aria-hidden="true"><use href="images/neurips-logo.svg#cvpage2_top"></use></svg>
-              <span>NeurIPS <span class="conference-year">2026</span></span>
+              <svg class="conference-mark" viewBox="0 4 26 27" width="54" height="56" aria-hidden="true">
+                <defs>
+                  <mask id="conference-mark-mask" maskUnits="userSpaceOnUse" x="0" y="4" width="26" height="27" style="mask-type: alpha">
+                    <use href="images/neurips-logo.svg#cvpage2_top"></use>
+                  </mask>
+                  <linearGradient id="conference-metal-glint">
+                    <stop offset="0" stop-color="#f1edf7" stop-opacity="0"></stop>
+                    <stop offset=".5" stop-color="#f1edf7" stop-opacity=".38"></stop>
+                    <stop offset="1" stop-color="#f1edf7" stop-opacity="0"></stop>
+                  </linearGradient>
+                </defs>
+                <use href="images/neurips-logo.svg#cvpage2_top"></use>
+                <g mask="url(#conference-mark-mask)">
+                  <rect class="conference-mark-sheen" x="-15" y="4" width="14" height="27" fill="url(#conference-metal-glint)"></rect>
+                </g>
+              </svg>
+              <span class="conference-wordmark">
+                <span class="conference-wordmark-base">NeurIPS <span class="conference-year">2026</span></span>
+                <span class="conference-wordmark-sheen" aria-hidden="true">NeurIPS <span class="conference-year">2026</span></span>
+              </span>
             </a>
           </div>
           <div class="resource-links" aria-label="Project resources">

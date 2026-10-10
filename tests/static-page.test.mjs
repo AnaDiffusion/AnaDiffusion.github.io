@@ -554,7 +554,7 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20261008-8["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20261010-3["']>/,
   );
 });
 
