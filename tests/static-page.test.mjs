@@ -376,8 +376,7 @@ test('scales the publication header typography responsively', () => {
 
   assert.match(css, /\.publication-heading\s*\{[^}]*width:\s*min\(1180px,\s*calc\(100vw - 64px\)\)/s);
   assert.match(css, /\.paper-subtitle\s*\{[^}]*font-size:\s*clamp\(2rem,\s*4vw,\s*3\.5rem\)/s);
-  assert.match(css, /\.authors\s*\{[^}]*font-size:\s*clamp\(1\.05rem,\s*1\.35vw,\s*1\.3rem\)/s);
-  assert.match(css, /\.affiliations\s*\{[^}]*font-size:\s*clamp\(\.98rem,\s*1\.15vw,\s*1\.15rem\)/s);
+  assert.match(css, /\.authors,\s*\.affiliations\s*\{[^}]*font-size:\s*clamp\(\.98rem,\s*1\.15vw,\s*1\.15rem\)/s);
   assert.match(css, /\.author-note\s*\{[^}]*font-size:\s*clamp\(\.9rem,\s*1vw,\s*1rem\)/s);
   assert.match(css, /\.hero-summary\s*\{[^}]*font-size:\s*clamp\(1\.35rem,\s*1\.9vw,\s*1\.7rem\)/s);
   assert.match(css, /@media \(max-width:\s*820px\)[\s\S]*\.publication-heading\s*\{[^}]*width:\s*calc\(100vw - 34px\)/);
@@ -555,7 +554,7 @@ test('cache-busts the stylesheet so current styles reach the browser', () => {
 
   assert.match(
     html,
-    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20260825-3["']>/,
+    /<link\s+rel=["']stylesheet["']\s+href=["']assets\/css\/main\.css\?v=20261008-8["']>/,
   );
 });
 

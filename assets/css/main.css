@@ -231,10 +231,21 @@ h1, h2, h3, strong { color: var(--ink); }
   100%     { width: 66%; opacity: 1; }
 }
 .paper-subtitle { max-width: 1180px; margin: 0 auto 36px; color: var(--ink); font-family: var(--serif); font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 400; line-height: 1.12; letter-spacing: -.025em; }
-.authors { margin-bottom: 12px; color: #38353f; font-size: clamp(1.05rem, 1.35vw, 1.3rem); font-weight: 600; line-height: 1.65; }
+.authors, .affiliations { font-size: clamp(.98rem, 1.15vw, 1.15rem); }
+.authors { margin-bottom: 12px; color: #38353f; font-weight: 600; line-height: 1.65; }
 .authors sup, .affiliations sup, .author-note sup { color: var(--lav-deep); font-size: .68em; font-weight: 800; }
-.affiliations { margin-bottom: 9px; color: #6a6772; font-size: clamp(.98rem, 1.15vw, 1.15rem); }
+.affiliations { margin-bottom: 9px; color: #6a6772; }
+@media (min-width: 821px) {
+  .authors, .affiliations { font-size: clamp(1.1rem, 1.3vw, 1.3rem); }
+}
 .author-note { margin-bottom: 32px; color: #8a8791; font-size: clamp(.9rem, 1vw, 1rem); }
+/* Official NeurIPS mark: https://neurips.cc/static/core/img/neurips-navbar-logo.svg */
+.conference-acceptance { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 auto 24px; }
+.acceptance-label { margin: 0; color: var(--lav-deep); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.conference-logo { display: inline-flex; align-items: center; gap: 10px; color: #392961; font-family: var(--sans); font-size: clamp(1.65rem, 2.6vw, 2rem); font-weight: 700; line-height: 1; letter-spacing: -.035em; text-decoration: none; }
+.conference-mark { width: 54px; height: 56px; flex: none; }
+.conference-year { color: #4b397f; font-weight: 500; }
+.conference-logo:hover { opacity: .85; }
 .resource-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
 .resource-links a {
   display: inline-flex; min-height: 46px; align-items: center; gap: 10px; padding: 10px 18px;
@@ -415,9 +426,28 @@ h1, h2, h3, strong { color: var(--ink); }
 .generation-table thead tr:first-child th:nth-child(3),
 .generation-table thead tr:last-child th:nth-child(6),
 .generation-table tbody td:nth-child(7) { border-left: 2px solid var(--line-dark); }
+@media (min-width: 821px) {
+  .generation-table { min-width: 0; table-layout: fixed; font-size: clamp(.85rem, 1.2vw, 1rem); }
+  .generation-table th, .generation-table td { padding: 10px 6px; white-space: normal; }
+  .generation-table th:first-child { min-width: 0; }
+  .generation-table thead tr:first-child th { font-size: 1rem; }
+  .generation-table thead tr:first-child th:first-child { width: 15%; }
+  .generation-table thead tr:last-child th { font-size: .8rem; }
+  .generation-table .ci { font-size: clamp(.7rem, .95vw, .8rem); }
+  .generation-table .method-cite { font-size: clamp(.68rem, .9vw, .75rem); }
+}
 .ablation-block { margin-top: 64px; }
 .ablation-table { min-width: 1390px; }
 .ablation-table .group-row th { position: static; padding: 10px 17px; background: #efe8fb; color: var(--lav-deep); box-shadow: none; font-size: .86rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+@media (min-width: 821px) {
+  .ablation-table { min-width: 0; table-layout: fixed; font-size: clamp(.85rem, 1.2vw, 1rem); }
+  .ablation-table th, .ablation-table td { padding: 10px 6px; white-space: normal; }
+  .ablation-table th:first-child { min-width: 0; }
+  .ablation-table thead tr:first-child th { font-size: .8rem; }
+  .ablation-table thead th:first-child { width: 32%; }
+  .ablation-table .ci { font-size: clamp(.7rem, .95vw, .8rem); }
+  .ablation-table .group-row th { padding: 8px 12px; font-size: .78rem; }
+}
 .editing-table-block { margin-top: 64px; margin-bottom: 0; }
 .editing-table { min-width: 1510px; }
 /* editing table uses rowspan for Region, so the sticky first-column rule mis-pins
@@ -426,6 +456,16 @@ h1, h2, h3, strong { color: var(--ink); }
 .editing-table thead th:first-child { position: static; }
 .editing-table th:nth-child(2) { min-width: 160px; }
 .editing-table .region-start > * { border-top: 2px solid var(--line-dark); }
+@media (min-width: 821px) {
+  .editing-table { min-width: 0; table-layout: fixed; font-size: clamp(.85rem, 1.2vw, 1rem); }
+  .editing-table th, .editing-table td { padding: 10px 6px; white-space: normal; }
+  .editing-table th:first-child, .editing-table th:nth-child(2) { min-width: 0; }
+  .editing-table thead tr:first-child th { font-size: .8rem; }
+  .editing-table thead th:first-child { width: 18%; }
+  .editing-table thead th:nth-child(2) { width: 12%; }
+  .editing-table .ci { font-size: clamp(.7rem, .95vw, .8rem); }
+}
+
 
 /* Collapsible secondary tables — keep the page light, content stays in the DOM */
 .table-collapse { margin-top: 6px; }
@@ -629,7 +669,6 @@ h1, h2, h3, strong { color: var(--ink); }
 }
 
 @media (max-width: 480px) {
-  .authors { font-size: .9rem; }
   .resource-links { display: grid; }
   .resource-links a { width: 100%; justify-content: center; }
   .samples-heading { text-align: left; }
