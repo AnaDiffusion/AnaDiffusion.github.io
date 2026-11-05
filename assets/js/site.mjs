@@ -1,4 +1,3 @@
-import { initSampleGallery } from './sample-gallery.mjs';
 
 document.documentElement.classList.add('js');
 
@@ -114,12 +113,6 @@ window.addEventListener('resize', () => {
 }, { passive: true });
 copyButton?.addEventListener('click', copyBibtex);
 updateHeader();
-
-try {
-  initSampleGallery(document);
-} catch (error) {
-  console.warn('AnaDiffusion sample gallery fallback active.', error);
-}
 
 try {
   initTitleAssembly(document);

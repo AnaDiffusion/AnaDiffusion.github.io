@@ -30,12 +30,11 @@ const VOLUMES = {
 const INTENSITY_WINDOW = Object.freeze({ cal_min: -1, cal_max: 1 });
 const RGB_DATATYPES = new Set([128, 2304]); // NIfTI RGB24 and RGBA32
 
-export async function initVolumeViewer(root = document) {
-  const stage = root.querySelector('[data-volume-viewer]');
+export async function initVolumeViewer(stage) {
   if (!stage || stage.dataset.ready === '1') return;
   stage.dataset.ready = '1';
   const shell = stage.closest('.viewer-shell') ?? stage.parentElement;
-  const statusEl = root.querySelector('[data-viewer-status]');
+  const statusEl = shell.querySelector('[data-viewer-status]');
   const setStatus = (t) => { if (statusEl) statusEl.textContent = t; };
 
   const canvas = document.createElement('canvas');
@@ -75,6 +74,11 @@ export async function initVolumeViewer(root = document) {
         setStatus('Assembled in world coordinates — left (lavender) + right (green) hemispheres + cerebellum–brainstem (butter).');
       } else {
         await nv.loadVolumes([{ url: VOLUMES[which].url, colormap: 'gray', opacity: 1, ...INTENSITY_WINDOW }]);
+        if (VOLUMES[which].view) {
+          const [azimuth, elevation, scale = 1] = VOLUMES[which].view;
+          nv.setRenderAzimuthElevation(azimuth, elevation);
+          nv.setScale(scale);
+        }
         setStatus(VOLUMES[which].label + ' · drag to rotate / move · scroll to zoom');
       }
     } catch (err) {
@@ -87,24 +91,31 @@ export async function initVolumeViewer(root = document) {
   }
 
   for (const btn of shell.querySelectorAll('[data-vol]')) {
+    if (btn.dataset.url) {
+      VOLUMES[btn.dataset.vol] = {
+        url: btn.dataset.url,
+        label: btn.dataset.label ?? btn.textContent.trim(),
+        view: btn.dataset.renderView?.split(',').map(Number),
+      };
+    }
     btn.addEventListener('click', () => { activate('vol', btn); load(btn.dataset.vol); });
   }
 
   nv.setSliceType(nv.sliceTypeMultiplanar);
-  await load('whole');
+  const first = shell.querySelector('[data-vol].is-active') ?? shell.querySelector('[data-vol]');
+  await load(first?.dataset.vol ?? 'whole');
 }
 
-// Lazy boot: only spin up NiiVue + fetch volumes once the viewer nears the viewport.
+// Lazy boot: only spin up NiiVue + fetch volumes once a viewer nears the viewport.
 function bootVolumeViewer() {
-  const stage = document.querySelector('[data-volume-viewer]');
-  if (!stage) return;
-  if (!('IntersectionObserver' in window)) { initVolumeViewer(document); return; }
+  const stages = document.querySelectorAll('[data-volume-viewer]');
+  if (!('IntersectionObserver' in window)) { stages.forEach((stage) => initVolumeViewer(stage)); return; }
   const io = new IntersectionObserver((entries, obs) => {
     for (const entry of entries) {
-      if (entry.isIntersecting) { obs.disconnect(); initVolumeViewer(document); }
+      if (entry.isIntersecting) { obs.unobserve(entry.target); initVolumeViewer(entry.target); }
     }
   }, { rootMargin: '600px 0px' });
-  io.observe(stage);
+  stages.forEach((stage) => io.observe(stage));
 }
 
 bootVolumeViewer();
