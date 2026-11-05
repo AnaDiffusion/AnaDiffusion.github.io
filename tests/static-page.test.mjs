@@ -324,7 +324,7 @@ test('uses the shared skinny border for Figure 3', () => {
 test('shows generated whole brains and parts in an interactive volume viewer', () => {
   const html = readPage();
   const section = html.match(/<section class="samples-section"[\s\S]*?<\/section>/)?.[0] ?? '';
-  const groups = { whole: ['Whole brain', 10], lhemi: ['Left hemisphere', 5], rhemi: ['Right hemisphere', 5], cb: ['Cerebellum–brainstem', 5] };
+  const groups = { whole: ['Whole brain', 10], lhemi: ['Left hemisphere', 10], rhemi: ['Right hemisphere', 10], cb: ['Cerebellum–brainstem', 10] };
 
   for (const [key, [title, count]] of Object.entries(groups)) {
     assert.match(section, new RegExp(`<p class="sample-group-label" id="sample-group-${key}">${title}</p>`));
